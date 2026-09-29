@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Acordater.App.ViewModels"
+             xmlns:strings="clr-namespace:Acordater.App.Resources.Strings"
+             x:Class="Acordater.App.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
+             Title="{x:Static strings:AppResources.Settings}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="16">
+
+            <Label Text="{x:Static strings:AppResources.Welcome}"
+                   IsVisible="{Binding IsFirstRun}"
+                   FontSize="18"
+                   FontAttributes="Bold" />
+
+            <Label Text="{x:Static strings:AppResources.QuietHoursTitle}" FontSize="20" FontAttributes="Bold" />
+            <Label Text="{x:Static strings:AppResources.QuietHoursDescription}" />
+
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="8">
+                <Label Text="{x:Static strings:AppResources.QuietStart}" VerticalOptions="Center" />
+                <TimePicker Grid.Column="1" Time="{Binding QuietStart}" Format="HH:mm" />
+                <Label Grid.Row="1" Text="{x:Static strings:AppResources.QuietEnd}" VerticalOptions="Center" />
+                <TimePicker Grid.Row="1" Grid.Column="1" Time="{Binding QuietEnd}" Format="HH:mm" />
+            </Grid>
+
+            <Label Text="{x:Static strings:AppResources.QuietDisabledHint}" FontSize="13" TextColor="{StaticResource Gray500}" />
+
+            <Button Text="{x:Static strings:AppResources.Save}" Command="{Binding SaveCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

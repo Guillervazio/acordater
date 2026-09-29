@@ -1,7 +1,7 @@
 namespace Acordater.Core.Scheduling;
 
 /// <summary>Business rules for when a reminder alerts (docs/spec.md, sections 4.1–4.3).</summary>
-public sealed class ReminderScheduler(TimeProvider time, QuietHours quietHours)
+public sealed class ReminderScheduler(TimeProvider time, IQuietHoursProvider quietHours)
 {
     public static readonly TimeSpan RepeatInterval = TimeSpan.FromHours(1);
 
@@ -40,8 +40,8 @@ public sealed class ReminderScheduler(TimeProvider time, QuietHours quietHours)
     public DateTimeOffset AlarmTimeFor(Reminder reminder)
     {
         var now = time.GetLocalNow();
-        return reminder.NextReminderAt > now ? reminder.NextReminderAt : quietHours.Defer(now, time.LocalTimeZone);
+        return reminder.NextReminderAt > now ? reminder.NextReminderAt : quietHours.Current.Defer(now, time.LocalTimeZone);
     }
 
-    DateTimeOffset NextRepeatFrom(DateTimeOffset now) => quietHours.Defer(now + RepeatInterval, time.LocalTimeZone);
+    DateTimeOffset NextRepeatFrom(DateTimeOffset now) => quietHours.Current.Defer(now + RepeatInterval, time.LocalTimeZone);
 }

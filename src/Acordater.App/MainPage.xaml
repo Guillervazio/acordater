@@ -7,6 +7,10 @@
              x:DataType="vm:MainViewModel"
              Title="{x:Static strings:AppResources.AppTitle}">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="{x:Static strings:AppResources.Settings}" Command="{Binding OpenSettingsCommand}" />
+    </ContentPage.ToolbarItems>
+
     <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
 
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">

@@ -88,6 +88,22 @@ public class ReminderSchedulerTests
     }
 
     [Fact]
+    public void ChangedQuietHoursApplyToLaterCalculations()
+    {
+        var settings = new MutableQuietHours { Current = QuietHours.Default };
+        var scheduler = new ReminderScheduler(At(29, 21, 30), settings);
+
+        settings.Current = new QuietHours(new(23, 0), new(7, 0));
+
+        Assert.Equal(Local(29, 22, 30), scheduler.Create("x").NextReminderAt);
+    }
+
+    sealed class MutableQuietHours : IQuietHoursProvider
+    {
+        public required QuietHours Current { get; set; }
+    }
+
+    [Fact]
     public void CompleteMarksReminderDone()
     {
         var time = At(29, 10);

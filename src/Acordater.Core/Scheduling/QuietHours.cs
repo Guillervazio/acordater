@@ -1,12 +1,21 @@
 namespace Acordater.Core.Scheduling;
 
+/// <summary>Source of the user's current quiet hours, read on every calculation so settings changes apply at once.</summary>
+public interface IQuietHoursProvider
+{
+    QuietHours Current { get; }
+}
+
 /// <summary>
 /// Daily window [Start, End) in local time during which default reminders and repeats are not delivered.
 /// The window may wrap around midnight. Start == End disables it.
+/// A fixed value is also its own provider.
 /// </summary>
-public sealed record QuietHours(TimeOnly Start, TimeOnly End)
+public sealed record QuietHours(TimeOnly Start, TimeOnly End) : IQuietHoursProvider
 {
     public static QuietHours Default { get; } = new(new TimeOnly(22, 0), new TimeOnly(8, 0));
+
+    QuietHours IQuietHoursProvider.Current => this;
 
     public bool IsEnabled => Start != End;
 

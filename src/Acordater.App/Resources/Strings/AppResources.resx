@@ -24,4 +24,11 @@
   <data name="FullScreenMessage" xml:space="preserve"><value>Para que los recordatorios aparezcan como una alarma con el teléfono bloqueado, activa las notificaciones de pantalla completa para Acordater.</value></data>
   <data name="OpenSettings" xml:space="preserve"><value>Abrir ajustes</value></data>
   <data name="NotNow" xml:space="preserve"><value>Ahora no</value></data>
+  <data name="Settings" xml:space="preserve"><value>Ajustes</value></data>
+  <data name="Welcome" xml:space="preserve"><value>¡Bienvenido! Antes de empezar, elige tu horario de silencio.</value></data>
+  <data name="QuietHoursTitle" xml:space="preserve"><value>Horario de silencio</value></data>
+  <data name="QuietHoursDescription" xml:space="preserve"><value>En este horario no suenan las repeticiones ni los avisos sin hora: se mueven al final del horario. Las horas que pidas explícitamente ("a las 23") sí se respetan.</value></data>
+  <data name="QuietStart" xml:space="preserve"><value>Desde</value></data>
+  <data name="QuietEnd" xml:space="preserve"><value>Hasta</value></data>
+  <data name="QuietDisabledHint" xml:space="preserve"><value>Si las dos horas son iguales, no hay horario de silencio.</value></data>
 </root>

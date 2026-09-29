@@ -24,4 +24,11 @@
   <data name="FullScreenMessage" xml:space="preserve"><value>To show reminders as an alarm while the phone is locked, allow full-screen notifications for Acordater.</value></data>
   <data name="OpenSettings" xml:space="preserve"><value>Open settings</value></data>
   <data name="NotNow" xml:space="preserve"><value>Not now</value></data>
+  <data name="Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Welcome" xml:space="preserve"><value>Welcome! Before you start, choose your quiet hours.</value></data>
+  <data name="QuietHoursTitle" xml:space="preserve"><value>Quiet hours</value></data>
+  <data name="QuietHoursDescription" xml:space="preserve"><value>During these hours, repeats and reminders without a time don't ring: they move to the end of the quiet hours. Times you ask for explicitly ("at 23:00") are still respected.</value></data>
+  <data name="QuietStart" xml:space="preserve"><value>From</value></data>
+  <data name="QuietEnd" xml:space="preserve"><value>Until</value></data>
+  <data name="QuietDisabledHint" xml:space="preserve"><value>If both times are the same, there are no quiet hours.</value></data>
 </root>

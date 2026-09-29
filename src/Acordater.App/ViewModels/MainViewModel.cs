@@ -15,8 +15,12 @@ public sealed partial class MainViewModel(
 	ReminderService reminders,
 	ReminderScheduler scheduler,
 	IReminderInterpreter interpreter,
-	ReminderTimeFormatter formatter) : ObservableObject
+	ReminderTimeFormatter formatter,
+	QuietHoursSettings quietHours) : ObservableObject
 {
+	/// <summary>First run: quiet hours must be chosen before using the app.</summary>
+	public bool NeedsSetup => !quietHours.IsConfigured;
+
 	[ObservableProperty]
 	public partial string NewReminderText { get; set; } = "";
 
@@ -48,6 +52,9 @@ public sealed partial class MainViewModel(
 		NewReminderText = "";
 		await LoadAsync();
 	}
+
+	[RelayCommand]
+	Task OpenSettingsAsync() => Shell.Current.GoToAsync(AppShell.SettingsRoute);
 
 	[RelayCommand]
 	async Task CompleteAsync(ReminderItem item)

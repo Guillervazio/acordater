@@ -18,6 +18,12 @@ public partial class MainPage : ContentPage
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
+		if (viewModel.NeedsSetup)
+		{
+			await viewModel.OpenSettingsCommand.ExecuteAsync(null);
+			return;
+		}
+
 		await AlarmPermissions.RequestAsync(this);
 		await viewModel.LoadCommand.ExecuteAsync(null);
 	}
