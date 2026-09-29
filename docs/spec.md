@@ -30,8 +30,10 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 | "recordame **a las 18** regar las plantas" | próximas 18:00 (hoy o mañana) | cada 1 h |
 
 - El intervalo de repetición es siempre **1 hora**. El tiempo que indique el usuario solo afecta al **primer** aviso.
-- Una hora sin día ("a las 9") se refiere a la **próxima** ocurrencia de esa hora.
-- Expresiones del tipo "a la mañana" o "a la tarde" desambiguan la hora ("a la tarde a las 6" → 18:00).
+- **Formato de 24 horas.** La app muestra siempre las horas como HH:mm (18:00, nunca 6:00 PM), en ambos idiomas. Al interpretar, la hora dicha se toma literal en 24 h: "a las 9" → 09:00, "a las 3" → 03:00, "a las 21" → 21:00.
+- Una hora sin día se refiere a la **próxima** ocurrencia de esa hora: a las 10:00, "a las 9" → mañana 09:00.
+- Las expresiones de franja y am/pm sí convierten la hora: "a las 6 de la tarde", "a la tarde a las 6", "at 6 pm" → 18:00.
+- Día o franja sin hora: "mañana" → 09:00; "a la mañana" → 09:00; "a la tarde" → 15:00; "a la noche" / "esta noche" → 20:00.
 - Cada ítem es un recordatorio independiente (no hay listas en el MVP).
 
 ### 4.2 Acciones sobre un aviso
@@ -39,11 +41,13 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 - **Hecho ✓**: finaliza el recordatorio; no vuelve a avisar.
 - **Posponer**: silencia el aviso actual; el próximo llega 1 h después de pulsarlo.
 - Sin respuesta: el próximo aviso llega 1 h después del anterior.
+- Insiste **indefinidamente** (respetando el horario de silencio) hasta que se marque como hecho.
 
 ### 4.3 Horario de silencio
 
 - Por defecto **22:00 → 08:00**, configurable en la configuración inicial y luego en ajustes.
-- Un aviso que caiga dentro del silencio se mueve al **final del silencio** (08:00 por defecto).
+- El aviso por defecto (+1 h) y las repeticiones que caigan dentro del silencio se mueven al **final del silencio** (08:00 por defecto).
+- Un tiempo pedido **explícitamente** ("a las 23", "en 2 horas") se respeta aunque caiga dentro del silencio.
 - Varios avisos pendientes al terminar el silencio se entregan juntos, no uno por hora.
 
 ### 4.4 Cómo avisa
@@ -121,6 +125,4 @@ Notas técnicas de Android:
 
 ## 9. Preguntas abiertas
 
-- Si el usuario pide una hora **explícita** dentro del horario de silencio ("recordame a las 23"), ¿se respeta? Propuesta: sí, el horario de silencio solo afecta a las repeticiones y a los tiempos por defecto.
-- ¿El aviso se repite indefinidamente, o se deja de insistir tras N avisos o N días?
 - ¿Se puede ver y reactivar el historial de recordatorios hechos?

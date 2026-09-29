@@ -30,7 +30,8 @@ src/Acordater.App           .NET MAUI app, targets net10.0-android only (min API
 ```
 
 - **All business rules live in Core and are unit-tested there**: scheduling (first reminder, 1-hour repeats, snooze, quiet hours) and natural-language interpretation. The App project must not reimplement them. Core is the fast feedback loop; the App needs a device to verify.
-- **Time is injected** (`TimeProvider`, with `FakeTimeProvider` in tests). Never call `DateTime.Now` in Core.
+- **Time is injected** (`TimeProvider`, with `FakeTimeProvider` in tests). Never call `DateTime.Now` in Core. `FakeTimeProvider` ignores the offset of the `DateTimeOffset` it receives, so use the `TestClock` helpers in tests.
+- **24-hour clock everywhere**: display times as `HH:mm` in both languages, never AM/PM. A spoken hour is literal ("a las 3" = 03:00) unless a period word or am/pm changes it.
 - **Interpretation is pluggable**: every interpreter implements `IReminderInterpreter` (text → task + optional first reminder time). The offline rule-based interpreter is the baseline and the fallback. LLM providers (Claude, OpenAI, Gemini, Gemini Nano) are added as more implementations, each using the user's own API key. See spec section 5.
 - **Platform capabilities sit behind interfaces** in the App (alarm scheduling, notifications, speech-to-text, text-to-speech), with Android implementations under `Platforms/Android`. Alarms must use exact `AlarmManager` alarms, play on the alarm audio stream (so they sound in silent mode), and be rescheduled on boot.
 
