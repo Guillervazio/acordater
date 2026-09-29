@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Acordater.App/Acordater.App.csproj" />
+    <Project Path="src/Acordater.Core/Acordater.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Acordater.Core.Tests/Acordater.Core.Tests.csproj" />
+  </Folder>
+</Solution>
