@@ -16,4 +16,7 @@
   <data name="WhenToday" xml:space="preserve"><value>today at {0}</value></data>
   <data name="WhenTomorrow" xml:space="preserve"><value>tomorrow at {0}</value></data>
   <data name="WhenDate" xml:space="preserve"><value>on {0} at {1}</value></data>
+  <data name="Snooze" xml:space="preserve"><value>Snooze 1 h</value></data>
+  <data name="NotificationBody" xml:space="preserve"><value>I'll remind you every hour until you mark it done.</value></data>
+  <data name="ChannelName" xml:space="preserve"><value>Reminders</value></data>
 </root>

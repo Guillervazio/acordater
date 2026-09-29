@@ -1,4 +1,5 @@
 using Acordater.App.ViewModels;
+using Acordater.Core.Alerts;
 using Acordater.Core.Interpretation;
 using Acordater.Core.Scheduling;
 using Acordater.Data;
@@ -27,7 +28,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton(QuietHours.Default);
 		builder.Services.AddSingleton<ReminderScheduler>();
 		builder.Services.AddSingleton<IReminderInterpreter, RuleBasedInterpreter>();
-		builder.Services.AddSingleton<ReminderStore>();
+		builder.Services.AddSingleton<IReminderStore, ReminderStore>();
+		builder.Services.AddSingleton<ReminderService>();
+		builder.Services.AddSingleton<IAlarmScheduler, AndroidAlarmScheduler>();
+		builder.Services.AddSingleton<IReminderNotifier, AndroidReminderNotifier>();
 		builder.Services.AddSingleton<ReminderTimeFormatter>();
 		builder.Services.AddTransient<MainViewModel>();
 		builder.Services.AddTransient<MainPage>();

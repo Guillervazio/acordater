@@ -1,12 +1,12 @@
 using Acordater.Core;
+using Acordater.Core.Alerts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Acordater.Data;
 
-/// <summary>Persistence for reminders. Each call uses its own short-lived context.</summary>
-public sealed class ReminderStore(IDbContextFactory<AcordaterDbContext> contextFactory)
+/// <summary>SQLite persistence for reminders. Each call uses its own short-lived context.</summary>
+public sealed class ReminderStore(IDbContextFactory<AcordaterDbContext> contextFactory) : IReminderStore
 {
-    /// <summary>Not-done reminders, soonest first.</summary>
     public async Task<IReadOnlyList<Reminder>> GetPendingAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);

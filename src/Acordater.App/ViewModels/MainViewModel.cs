@@ -1,9 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using Acordater.App.Resources.Strings;
+using Acordater.Core.Alerts;
 using Acordater.Core.Interpretation;
 using Acordater.Core.Scheduling;
-using Acordater.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -12,7 +12,7 @@ namespace Acordater.App.ViewModels;
 public sealed record ReminderItem(Guid Id, string Text, string When);
 
 public sealed partial class MainViewModel(
-	ReminderStore store,
+	ReminderService reminders,
 	ReminderScheduler scheduler,
 	IReminderInterpreter interpreter,
 	ReminderTimeFormatter formatter) : ObservableObject
@@ -25,7 +25,7 @@ public sealed partial class MainViewModel(
 	[RelayCommand]
 	async Task LoadAsync()
 	{
-		var pending = await store.GetPendingAsync();
+		var pending = await reminders.GetPendingAsync();
 		Reminders.Clear();
 		foreach (var reminder in pending)
 			Reminders.Add(new ReminderItem(reminder.Id, reminder.Text, formatter.Format(reminder.NextReminderAt)));
@@ -44,7 +44,7 @@ public sealed partial class MainViewModel(
 		if (!await Shell.Current.DisplayAlertAsync(AppResources.ConfirmTitle, message, AppResources.Save, AppResources.Cancel))
 			return;
 
-		await store.AddAsync(reminder);
+		await reminders.AddAsync(reminder);
 		NewReminderText = "";
 		await LoadAsync();
 	}
@@ -52,10 +52,7 @@ public sealed partial class MainViewModel(
 	[RelayCommand]
 	async Task CompleteAsync(ReminderItem item)
 	{
-		if (await store.GetAsync(item.Id) is not { } reminder) return;
-
-		scheduler.Complete(reminder);
-		await store.UpdateAsync(reminder);
+		await reminders.CompleteAsync(item.Id);
 		Reminders.Remove(item);
 	}
 }

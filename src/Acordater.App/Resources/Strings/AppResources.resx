@@ -16,4 +16,7 @@
   <data name="WhenToday" xml:space="preserve"><value>hoy a las {0}</value><comment>{0} = HH:mm</comment></data>
   <data name="WhenTomorrow" xml:space="preserve"><value>mañana a las {0}</value><comment>{0} = HH:mm</comment></data>
   <data name="WhenDate" xml:space="preserve"><value>el {0} a las {1}</value><comment>{0} = day and month, {1} = HH:mm</comment></data>
+  <data name="Snooze" xml:space="preserve"><value>Posponer 1 h</value></data>
+  <data name="NotificationBody" xml:space="preserve"><value>Te lo recuerdo cada hora hasta que lo marques como hecho.</value></data>
+  <data name="ChannelName" xml:space="preserve"><value>Recordatorios</value></data>
 </root>

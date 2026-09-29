@@ -33,5 +33,15 @@ public sealed class ReminderScheduler(TimeProvider time, QuietHours quietHours)
 
     public void Complete(Reminder reminder) => reminder.CompletedAt = time.GetLocalNow();
 
+    /// <summary>
+    /// When the alarm of a pending reminder should fire: its scheduled time, or, if that already passed
+    /// (e.g. the phone was off), now, deferred past quiet hours.
+    /// </summary>
+    public DateTimeOffset AlarmTimeFor(Reminder reminder)
+    {
+        var now = time.GetLocalNow();
+        return reminder.NextReminderAt > now ? reminder.NextReminderAt : quietHours.Defer(now, time.LocalTimeZone);
+    }
+
     DateTimeOffset NextRepeatFrom(DateTimeOffset now) => quietHours.Defer(now + RepeatInterval, time.LocalTimeZone);
 }
