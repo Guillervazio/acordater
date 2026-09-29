@@ -1,0 +1,11 @@
+{
+  "solution": {
+    "path": "Acordater.slnx",
+    "projects": [
+      "src\\Acordater.Core\\Acordater.Core.csproj",
+      "src\\Acordater.Data\\Acordater.Data.csproj",
+      "tests\\Acordater.Core.Tests\\Acordater.Core.Tests.csproj",
+      "tests\\Acordater.Data.Tests\\Acordater.Data.Tests.csproj"
+    ]
+  }
+}

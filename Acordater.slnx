@@ -2,8 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/Acordater.App/Acordater.App.csproj" />
     <Project Path="src/Acordater.Core/Acordater.Core.csproj" />
+    <Project Path="src/Acordater.Data/Acordater.Data.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Acordater.Core.Tests/Acordater.Core.Tests.csproj" />
+    <Project Path="tests/Acordater.Data.Tests/Acordater.Data.Tests.csproj" />
   </Folder>
 </Solution>
