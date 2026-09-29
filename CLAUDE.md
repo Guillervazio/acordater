@@ -1,4 +1,4 @@
-﻿# CLAUDE.md
+# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -31,7 +31,7 @@ Android builds need the user-level env vars `ANDROID_HOME` (Android SDK under `%
 ```
 src/Acordater.Core          net10.0 class library, pure logic, no MAUI/Android references
 src/Acordater.Data          EF Core + SQLite: AcordaterDbContext, ReminderStore, migrations (no MAUI references)
-src/Acordater.App           .NET MAUI app (MVVM with CommunityToolkit.Mvvm), targets net10.0-android only (min API 33)
+src/Acordater.App           .NET MAUI app (MVVM with CommunityToolkit.Mvvm), targets net10.0-android only (min API 34, Android 14)
 tests/Acordater.Core.Tests  xUnit tests for Core
 tests/Acordater.Data.Tests  xUnit tests against in-memory SQLite built from the real migrations
 ```

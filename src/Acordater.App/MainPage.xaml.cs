@@ -18,7 +18,7 @@ public partial class MainPage : ContentPage
 	protected override async void OnAppearing()
 	{
 		base.OnAppearing();
-		await Permissions.RequestAsync<Permissions.PostNotifications>();
+		await AlarmPermissions.RequestAsync(this);
 		await viewModel.LoadCommand.ExecuteAsync(null);
 	}
 }

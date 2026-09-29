@@ -55,6 +55,7 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 - Notificación con **sonido** + **lectura en voz alta** (TTS) del texto del recordatorio.
 - Debe sonar **aunque el teléfono esté en silencio** (canal de audio de alarma, como un despertador).
 - Presentación tipo alarma (pantalla completa si el teléfono está bloqueado) con los botones **Hecho** y **Posponer**.
+- Suena **en bucle hasta que se pulse Hecho o Posponer**, como un despertador. Si suenan varios a la vez, se muestran de a uno; la alarma se calla cuando no queda ninguno sonando.
 - Tras reiniciar el teléfono, los recordatorios pendientes se reprograman; los que vencieron con el teléfono apagado avisan al arrancar.
 
 ### 4.5 Captura por voz

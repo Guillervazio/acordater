@@ -19,4 +19,9 @@
   <data name="Snooze" xml:space="preserve"><value>Snooze 1 h</value></data>
   <data name="NotificationBody" xml:space="preserve"><value>I'll remind you every hour until you mark it done.</value></data>
   <data name="ChannelName" xml:space="preserve"><value>Reminders</value></data>
+  <data name="AlarmMore" xml:space="preserve"><value>And {0} more ringing.</value></data>
+  <data name="FullScreenTitle" xml:space="preserve"><value>Full-screen alarms</value></data>
+  <data name="FullScreenMessage" xml:space="preserve"><value>To show reminders as an alarm while the phone is locked, allow full-screen notifications for Acordater.</value></data>
+  <data name="OpenSettings" xml:space="preserve"><value>Open settings</value></data>
+  <data name="NotNow" xml:space="preserve"><value>Not now</value></data>
 </root>
