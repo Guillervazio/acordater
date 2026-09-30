@@ -20,7 +20,8 @@ public sealed partial class ReminderViewModel(
 	ReminderScheduler scheduler,
 	ReminderTimeFormatter formatter,
 	TimeProvider time,
-	VoiceFeedback voice) : ObservableObject, IQueryAttributable
+	VoiceFeedback voice,
+	LanguageSettings language) : ObservableObject, IQueryAttributable
 {
 	/// <summary>Navigation parameter: the <see cref="InterpretedReminder"/> to confirm.</summary>
 	public const string DraftKey = "draft";
@@ -101,7 +102,8 @@ public sealed partial class ReminderViewModel(
 		var token = autoSave.Token;
 		try
 		{
-			await voice.SpeakAsync(Summary, token);
+			var spoken = language.VoiceCulture;
+			await voice.SpeakAsync(SummaryIn(spoken), spoken, token);
 			for (var secondsLeft = AutoSaveSeconds; secondsLeft > 0; secondsLeft--)
 			{
 				SaveLabel = string.Format(CultureInfo.CurrentCulture, AppResources.SaveCountdown, secondsLeft);
@@ -162,9 +164,12 @@ public sealed partial class ReminderViewModel(
 		UpdateSummary();
 	}
 
-	void UpdateSummary() =>
-		Summary = string.Format(CultureInfo.CurrentCulture, AppResources.ConfirmMessage,
-			Text.Trim(), formatter.Format(scheduler.FirstAlertAt(RequestedAt())));
+	void UpdateSummary() => Summary = SummaryIn(CultureInfo.CurrentUICulture);
+
+	// On screen in the app's language; spoken in the voice's, which may differ.
+	string SummaryIn(CultureInfo culture) =>
+		string.Format(culture, ReminderTimeFormatter.Text(nameof(AppResources.ConfirmMessage), culture),
+			Text.Trim(), formatter.Format(scheduler.FirstAlertAt(RequestedAt()), culture));
 
 	DateTimeOffset? RequestedAt()
 	{

@@ -138,6 +138,9 @@ public sealed class AlarmRingingService : Service, TextToSpeech.IOnInitListener
 		speech ??= new TextToSpeech(this, this); // OnInit announces the reminder once the engine is ready
 	}
 
+	// The language chosen for Acordater's voice in Settings.
+	static CultureInfo VoiceCulture => IPlatformApplication.Current!.Services.GetRequiredService<LanguageSettings>().VoiceCulture;
+
 	public void OnInit(OperationResult status)
 	{
 		if (status != OperationResult.Success || speech is null)
@@ -150,7 +153,7 @@ public sealed class AlarmRingingService : Service, TextToSpeech.IOnInitListener
 			.SetUsage(AudioUsageKind.Alarm)!
 			.SetContentType(AudioContentType.Speech)!
 			.Build());
-		speech.SetLanguage(Java.Util.Locale.Default);
+		speech.SetLanguage(Java.Util.Locale.ForLanguageTag(VoiceCulture.Name));
 		speech.SetOnUtteranceProgressListener(new SpeechListener(() => handler.Post(ResumeSound)));
 		speechReady = true;
 		Announce();
@@ -164,7 +167,8 @@ public sealed class AlarmRingingService : Service, TextToSpeech.IOnInitListener
 
 		announcedId = current.Id;
 		player?.Pause();
-		var text = string.Format(CultureInfo.CurrentCulture, AppResources.AlarmSpeech, current.Text);
+		var culture = VoiceCulture;
+		var text = string.Format(culture, ReminderTimeFormatter.Text(nameof(AppResources.AlarmSpeech), culture), current.Text);
 		if (speech.Speak(text, QueueMode.Flush, null, UtteranceId) != OperationResult.Success)
 			ResumeSound();
 

@@ -34,6 +34,12 @@
                     ItemsSource="{Binding LanguageNames}"
                     SelectedIndex="{Binding SelectedLanguageIndex}" />
 
+            <Label Text="{x:Static strings:AppResources.VoiceLanguageTitle}" FontAttributes="Bold" />
+            <Label Text="{x:Static strings:AppResources.VoiceLanguageDescription}" FontSize="13" TextColor="{StaticResource Gray500}" />
+            <Picker Title="{x:Static strings:AppResources.VoiceLanguageTitle}"
+                    ItemsSource="{Binding VoiceNames}"
+                    SelectedIndex="{Binding SelectedVoiceIndex}" />
+
             <!-- AI interpretation (docs/spec.md, section 5) -->
             <Label Text="{x:Static strings:AppResources.AiTitle}" FontSize="20" FontAttributes="Bold" Margin="0,16,0,0" />
             <Label Text="{x:Static strings:AppResources.AiDescription}" />

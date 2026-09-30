@@ -57,6 +57,13 @@ public sealed partial class SettingsViewModel : ObservableObject
 			_ => AppResources.LanguagePhone,
 		}).ToList();
 		SelectedLanguageIndex = LanguageSettings.All.ToList().IndexOf(language.Language);
+		VoiceNames = LanguageSettings.AllVoices.Select(v => v switch
+		{
+			VoiceLanguage.Spanish => AppResources.LanguageSpanish,
+			VoiceLanguage.English => AppResources.LanguageEnglish,
+			_ => AppResources.VoiceSameAsApp,
+		}).ToList();
+		SelectedVoiceIndex = LanguageSettings.AllVoices.ToList().IndexOf(language.Voice);
 		ProviderNames = AiProviders.All.Select(p => p == AiProvider.None ? AppResources.AiProviderNone : AiProviders.DisplayName(p)).ToList();
 	}
 
@@ -74,6 +81,11 @@ public sealed partial class SettingsViewModel : ObservableObject
 
 	[ObservableProperty]
 	public partial int SelectedLanguageIndex { get; set; }
+
+	public IReadOnlyList<string> VoiceNames { get; }
+
+	[ObservableProperty]
+	public partial int SelectedVoiceIndex { get; set; }
 
 	// AI interpretation (docs/spec.md, section 5).
 
@@ -293,6 +305,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 	{
 		settings.Save(new QuietHours(TimeOnly.FromTimeSpan(QuietStart ?? default), TimeOnly.FromTimeSpan(QuietEnd ?? default)));
 
+		language.Voice = LanguageSettings.AllVoices[Math.Max(0, SelectedVoiceIndex)];
 		var chosenLanguage = LanguageSettings.All[Math.Max(0, SelectedLanguageIndex)];
 		var languageChanged = chosenLanguage != language.Language;
 		if (languageChanged)

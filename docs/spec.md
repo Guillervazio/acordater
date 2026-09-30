@@ -72,10 +72,12 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 4. La app confirma lo que entendió en pantalla y en voz ("Te recuerdo *limpiar la caja del gato* hoy a las 16:30") y permite corregirlo antes de guardar. Tras leerlo, **se guarda solo a los 5 s** si el usuario no toca nada; tocar cualquier campo cancela la cuenta atrás.
 5. Si no se reconoce ningún tiempo, todo el texto es la tarea y se aplica la regla por defecto (+1 h).
 
-**Idioma** (Ajustes). Controla el idioma de la app, del dictado, de la voz de confirmación, de la lectura de la alarma y el contexto que recibe la IA. Opciones:
+**Idioma** (Ajustes). Controla el idioma de la app, del dictado y el contexto que recibe la IA. Opciones:
 - **Idioma del teléfono** (por defecto).
 - **Español** (es-ES) o **English** (en-US), aunque el teléfono esté en otro idioma.
 - **Español e inglés (automático)**: la app queda en el idioma del teléfono y el dictado detecta y cambia de idioma mientras escucha (Android 14+). Hacen falta los dos paquetes de voz descargados; si ese modo falla, vuelve a escuchar solo en el idioma principal.
+
+**Idioma de la voz** (Ajustes): en qué idioma habla Acordater, es decir, la confirmación al dictar y la lectura de la alarma. Opciones: **Igual que la app** (por defecto), **Español** o **English**. Así se puede, por ejemplo, tener la app en inglés y que hable en español. La voz concreta (hombre o mujer, acento) es la del motor de texto a voz de Android.
 
 El dictado, la voz y la IA usan el idioma nuevo enseguida; los textos de la app cambian la próxima vez que se abre. La IA nunca traduce la tarea: la deja en el idioma en que se dijo.
 

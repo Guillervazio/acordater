@@ -90,10 +90,13 @@
   <data name="WakeWordInvalidModel" xml:space="preserve"><value>The wake word model could not be loaded. Import an .onnx model trained with openWakeWord or go back to the built-in word.</value></data>
   <data name="WakeWordMicrophoneUnavailable" xml:space="preserve"><value>The microphone could not be used for the wake word.</value></data>
   <data name="LanguageTitle" xml:space="preserve"><value>Language</value></data>
-  <data name="LanguageDescription" xml:space="preserve"><value>Language of the app, the dictation and the voice. With “Spanish and English”, dictation recognizes both languages by itself (both voice packages must be downloaded on the phone).</value></data>
+  <data name="LanguageDescription" xml:space="preserve"><value>Language of the app and the dictation. With “Spanish and English”, dictation recognizes both languages by itself (both voice packages must be downloaded on the phone).</value></data>
   <data name="LanguagePhone" xml:space="preserve"><value>Phone language</value></data>
   <data name="LanguageSpanish" xml:space="preserve"><value>Español</value></data>
   <data name="LanguageEnglish" xml:space="preserve"><value>English</value></data>
   <data name="LanguageBilingual" xml:space="preserve"><value>Spanish and English (automatic)</value></data>
   <data name="LanguageRestart" xml:space="preserve"><value>Dictation and the voice already use the new language. The app's texts change the next time you open it.</value></data>
+  <data name="VoiceLanguageTitle" xml:space="preserve"><value>Voice language</value></data>
+  <data name="VoiceLanguageDescription" xml:space="preserve"><value>The language Acordater speaks to you in: the confirmation after dictating and the alarm reading.</value></data>
+  <data name="VoiceSameAsApp" xml:space="preserve"><value>Same as the app</value></data>
 </root>

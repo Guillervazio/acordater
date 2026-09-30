@@ -13,13 +13,23 @@ public enum AppLanguage
 	Bilingual,
 }
 
+/// <summary>Language Acordater speaks in (spoken confirmations and the alarm reading).</summary>
+public enum VoiceLanguage
+{
+	/// <summary>The language of the app (the default).</summary>
+	SameAsApp,
+	Spanish,
+	English,
+}
+
 /// <summary>
-/// The language of the app, the dictation, the spoken confirmations and the alarm reading. Stored in preferences
+/// The language of the app and the dictation, and separately the one Acordater speaks in. Stored in preferences
 /// and applied at startup; the user interface changes the next time the app starts, the rest right away.
 /// </summary>
 public sealed class LanguageSettings(IPreferences preferences)
 {
 	const string Key = "app_language";
+	const string VoiceKey = "voice_language";
 
 	// Spanish and English variants used for dictation and speech. es-ES: the app's users live in Spain.
 	public const string SpanishTag = "es-ES";
@@ -30,6 +40,8 @@ public sealed class LanguageSettings(IPreferences preferences)
 
 	public static readonly IReadOnlyList<AppLanguage> All = [AppLanguage.Phone, AppLanguage.Spanish, AppLanguage.English, AppLanguage.Bilingual];
 
+	public static readonly IReadOnlyList<VoiceLanguage> AllVoices = [VoiceLanguage.SameAsApp, VoiceLanguage.Spanish, VoiceLanguage.English];
+
 	public AppLanguage Language
 	{
 		get => Enum.TryParse<AppLanguage>(preferences.Get(Key, nameof(AppLanguage.Phone)), out var language) ? language : AppLanguage.Phone;
@@ -38,7 +50,21 @@ public sealed class LanguageSettings(IPreferences preferences)
 
 	static CultureInfo PhoneCulture => phoneCulture ??= CultureInfo.CurrentUICulture;
 
-	/// <summary>Culture of the user interface, the spoken confirmation and the alarm reading.</summary>
+	public VoiceLanguage Voice
+	{
+		get => Enum.TryParse<VoiceLanguage>(preferences.Get(VoiceKey, nameof(VoiceLanguage.SameAsApp)), out var voice) ? voice : VoiceLanguage.SameAsApp;
+		set => preferences.Set(VoiceKey, value.ToString());
+	}
+
+	/// <summary>Culture Acordater speaks in: its sentences and the text to speech voice.</summary>
+	public CultureInfo VoiceCulture => Voice switch
+	{
+		VoiceLanguage.Spanish => new CultureInfo(SpanishTag),
+		VoiceLanguage.English => new CultureInfo(EnglishTag),
+		_ => Culture,
+	};
+
+	/// <summary>Culture of the user interface.</summary>
 	public CultureInfo Culture => Language switch
 	{
 		AppLanguage.Spanish => new CultureInfo(SpanishTag),

@@ -2,17 +2,18 @@ using System.Globalization;
 
 namespace Acordater.App.Voice;
 
-/// <summary>Speaks confirmations in the current UI language.</summary>
+/// <summary>Speaks confirmations in the language chosen for Acordater's voice (<see cref="LanguageSettings.VoiceCulture"/>).</summary>
 public sealed class VoiceFeedback(ITextToSpeech textToSpeech)
 {
 	Locale? locale;
-	string? localeResolvedFor; // the culture changes when the language is changed in Settings
+	string? localeResolvedFor;
 
-	public async Task SpeakAsync(string text, CancellationToken cancellationToken)
+	/// <param name="culture">Language of <paramref name="text"/>, which selects the voice.</param>
+	public async Task SpeakAsync(string text, CultureInfo culture, CancellationToken cancellationToken)
 	{
 		try
 		{
-			await textToSpeech.SpeakAsync(text, new SpeechOptions { Locale = await LocaleAsync() }, cancellationToken);
+			await textToSpeech.SpeakAsync(text, new SpeechOptions { Locale = await LocaleAsync(culture) }, cancellationToken);
 		}
 		catch (Exception ex) when (ex is not OperationCanceledException)
 		{
@@ -21,9 +22,8 @@ public sealed class VoiceFeedback(ITextToSpeech textToSpeech)
 		}
 	}
 
-	async Task<Locale?> LocaleAsync()
+	async Task<Locale?> LocaleAsync(CultureInfo culture)
 	{
-		var culture = CultureInfo.CurrentUICulture;
 		if (localeResolvedFor == culture.Name) return locale;
 
 		var sameLanguage = (await textToSpeech.GetLocalesAsync())
