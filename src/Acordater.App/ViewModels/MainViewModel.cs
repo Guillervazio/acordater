@@ -33,7 +33,12 @@ public sealed partial class MainViewModel(
 	[NotifyPropertyChangedFor(nameof(ListenLabel))]
 	public partial bool IsListening { get; set; }
 
-	public string ListenLabel => IsListening ? AppResources.Listening : AppResources.Speak;
+	/// <summary>Waiting for the interpreter (an AI provider can take a few seconds).</summary>
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(ListenLabel))]
+	public partial bool IsInterpreting { get; set; }
+
+	public string ListenLabel => IsInterpreting ? AppResources.Interpreting : IsListening ? AppResources.Listening : AppResources.Speak;
 
 	public ObservableCollection<ReminderItem> Reminders { get; } = [];
 
@@ -68,6 +73,7 @@ public sealed partial class MainViewModel(
 			if (string.IsNullOrWhiteSpace(heard)) return;
 
 			NewReminderText = heard;
+			IsListening = false;
 			await ConfirmAsync(spoken: true);
 		}
 		catch (SpeechUnavailableException ex)
@@ -98,18 +104,29 @@ public sealed partial class MainViewModel(
 		Reminders.Remove(item);
 	}
 
-	/// <summary>Shows what was understood, to correct it before saving.</summary>
-	async Task ConfirmAsync(bool spoken)
+	/// <summary>Shows what was understood, to correct it before saving. False when there was nothing to confirm.</summary>
+	async Task<bool> ConfirmAsync(bool spoken)
 	{
 		var utterance = NewReminderText.Trim();
-		if (utterance.Length == 0) return;
+		if (utterance.Length == 0 || IsInterpreting) return false;
 
-		var interpreted = await interpreter.InterpretAsync(utterance);
+		InterpretedReminder interpreted;
+		IsInterpreting = true;
+		try
+		{
+			interpreted = await interpreter.InterpretAsync(utterance);
+		}
+		finally
+		{
+			IsInterpreting = false;
+		}
+
 		NewReminderText = "";
 		await Shell.Current.GoToAsync(AppShell.ReminderRoute, new ShellNavigationQueryParameters
 		{
 			[ReminderViewModel.DraftKey] = interpreted,
 			[ReminderViewModel.SpokenKey] = spoken,
 		});
+		return true;
 	}
 }

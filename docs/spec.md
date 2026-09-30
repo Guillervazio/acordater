@@ -66,9 +66,9 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 
 ### 4.5 Captura por voz
 
-1. El usuario activa la captura (botón en la app; más adelante widget / acceso rápido / palabra clave).
+1. El usuario activa la captura (botón en la app, widget o acceso rápido; más adelante palabra clave).
 2. Voz → texto con el reconocimiento de voz **en el dispositivo** (sin conexión), en el idioma del teléfono. Tocar de nuevo el botón termina de escuchar. Si falta el paquete de ese idioma, se pide su descarga y mientras tanto se usa el servicio de reconocimiento por defecto de Android.
-3. El intérprete extrae **qué** recordar y **cuándo** (si se dijo).
+3. El intérprete extrae **qué** recordar y **cuándo** (si se dijo): las reglas sin conexión o, si se configuró, un proveedor de IA (sección 5). Mientras espera, el botón muestra "Interpretando…".
 4. La app confirma lo que entendió en pantalla y en voz ("Te recuerdo *limpiar la caja del gato* hoy a las 16:30") y permite corregirlo antes de guardar. Tras leerlo, **se guarda solo a los 5 s** si el usuario no toca nada; tocar cualquier campo cancela la cuenta atrás.
 5. Si no se reconoce ningún tiempo, todo el texto es la tarea y se aplica la regla por defecto (+1 h).
 
@@ -81,15 +81,24 @@ La creación y edición por texto también debe existir (sirve para corregir y c
 ## 5. Interpretación del lenguaje
 
 - **Modo sin conexión (MVP):** intérprete basado en reglas para ES/EN. El dominio es acotado (tarea + tiempo relativo o absoluto opcional), así que las reglas lo cubren.
-- **Modo IA (futuro, opcional), multiproveedor:** para frases más libres. Cada usuario elige su proveedor en la configuración.
+- **Modo IA (opcional), multiproveedor:** para frases más libres. Cada usuario elige su proveedor en Ajustes. Por defecto: **"Sin IA (reglas)"**.
   - Todos los intérpretes implementan la misma interfaz (`IReminderInterpreter`: texto → tarea + primer aviso opcional):
     - `RuleBasedInterpreter`: sin conexión, siempre disponible.
-    - `ClaudeInterpreter`, `OpenAIInterpreter`, `GeminiInterpreter`: con la API key del usuario.
-    - `GeminiNanoInterpreter`: en el dispositivo, sin conexión ni coste (disponibilidad a verificar en el Pixel 8 Pro).
-  - El usuario configura el proveedor, la API key (guardada cifrada con `SecureStorage`) y opcionalmente el modelo.
-  - Todos usan el mismo prompt: fecha y hora actual, zona horaria e idioma como contexto, y respuesta en JSON estricto que la app valida.
-  - Implementación base: `Microsoft.Extensions.AI` (`IChatClient`) para no acoplarse a un SDK concreto.
-  - **Respaldo:** si el proveedor falla, no hay conexión o la respuesta no es válida, se usa `RuleBasedInterpreter`.
+    - `ChatInterpreter`: un único intérprete sobre `IChatClient` (`Microsoft.Extensions.AI`), para cualquier proveedor. Los proveedores solo aportan el cliente:
+
+      | Proveedor | Cliente | Modelo por defecto (barato y rápido) |
+      |---|---|---|
+      | Claude | SDK oficial `Anthropic` (`AsIChatClient`) | `claude-haiku-4-5` |
+      | OpenAI | `Microsoft.Extensions.AI.OpenAI` | `gpt-6-luna` (con razonamiento `none`) |
+      | Gemini | el mismo cliente de OpenAI contra el **endpoint compatible con OpenAI** de Gemini | `gemini-3.5-flash-lite` |
+
+  - **Gemini por el endpoint compatible con OpenAI** y no con el SDK `Google.GenAI` (que también implementa `IChatClient`): reutiliza un cliente maduro que ya está en la app, no suma `Google.Apis.Auth` y sus dependencias, y admite el modo JSON.
+  - El usuario configura el proveedor, una API key por proveedor (guardada cifrada con `SecureStorage`, nunca escrita en logs) y opcionalmente el modelo. El botón **Probar** interpreta una frase de ejemplo con lo escrito, aunque no esté guardado, y muestra el resultado y el tiempo, o el error.
+  - Con un modelo de OpenAI elegido por el usuario no se envía el esfuerzo de razonamiento, porque los modelos sin razonamiento rechazan ese parámetro.
+  - Todos usan el mismo prompt: un mensaje de sistema fijo con las reglas de 4.1 (hora literal en 24 h salvo franja o am/pm, próxima ocurrencia, horas por defecto de día y franja) y, en cada frase, la fecha y hora actual, el día de la semana, la zona horaria y el idioma. La respuesta es **JSON estricto**: `{"text": "...", "when": "yyyy-MM-ddTHH:mm" | null}`, en hora local. La app la valida: `text` no vacío y `when` nulo o con ese formato (se tolera JSON envuelto en markdown). Un `when` ya pasado aplica la regla por defecto.
+  - **Respaldo:** se usa `RuleBasedInterpreter` si el proveedor falla (API key inválida, modelo inexistente, cuota…), si no hay conexión, si tarda más de **7 s** (el flujo de voz lo espera) o si la respuesta no es válida. No hay reintentos: el timeout acota toda la llamada.
+  - La pantalla de confirmación indica discretamente qué intérprete se usó: "Interpretado con: Claude", "Interpretado con: reglas (sin IA)" o "Interpretado con: reglas (respaldo, Claude: no respondió a tiempo)".
+  - **Gemini Nano (descartado por ahora):** la API de ML Kit GenAI Prompt / AICore es Kotlin (funciones `suspend` y `Flow`). Usarla desde MAUI exige un módulo Kotlin propio que la envuelva con callbacks y se enlace como AAR, más enlazar sus dependencias (coroutines, AICore), y su lista oficial de dispositivos no garantiza el Pixel 8 Pro (Gemini Nano v1, solo texto). No es viable en el tiempo de esta fase, así que no se muestra en Ajustes. Para retomarlo, el camino es ese módulo Kotlin puente.
   - Las suscripciones de consumo (ChatGPT, Claude Pro/Max/Code) **no** dan acceso a una API y no se pueden usar desde una app propia. Cada proveedor requiere su **API key**, con un coste de céntimos al mes (la capa gratuita de Gemini tiene coste cero).
   - Privacidad: la voz se transcribe en el dispositivo; al proveedor solo llega el texto de la frase.
 
@@ -124,13 +133,14 @@ Notas técnicas de Android:
 | 3 | Voz: captura por voz sin conexión, confirmación, lectura en voz alta del aviso | Crear un recordatorio solo hablando | Hecha |
 | 4 | Accesos rápidos: widget y botón en ajustes rápidos (4.6) | Capturar sin abrir la app | Hecha |
 | 5 | **Spike** de palabra clave ("hey Cordie") con el teléfono bloqueado: Porcupine u openWakeWord + servicio en primer plano; medir batería | Decisión: sí/no y cómo | |
-| 6 | Modo IA multiproveedor (Claude, OpenAI, Gemini con API key propia; Gemini Nano) con respaldo en reglas | Frases libres interpretadas correctamente con cada proveedor | |
+| 6 | Modo IA multiproveedor (Claude, OpenAI, Gemini con API key propia) con respaldo en reglas (sección 5). Gemini Nano descartado por ahora | Frases libres interpretadas correctamente con cada proveedor | Implementada; falta probar en el Pixel |
 | 7 | Versión Windows | La app corre en Windows | |
 | Futuro | Listas (p. ej. compras como un único recordatorio) | — | |
 
 ## 8. Riesgos
 
 - **Palabra clave con el teléfono bloqueado:** Android restringe el micrófono en segundo plano (hace falta un servicio en primer plano con notificación permanente) y el consumo de batería es real. Por eso está aislado en la fase 5 y el MVP no depende de ello.
+- **Modo IA:** depende de servicios externos y de sus nombres de modelo, que cambian (los modelos por defecto se pueden cambiar en Ajustes sin recompilar). El respaldo en reglas hace que nunca bloquee la creación de recordatorios.
 - **Optimización de batería / Doze:** puede retrasar las alarmas si no son exactas; hay que verificarlo en el dispositivo real.
 - **Asperezas de MAUI** en herramientas y en el acceso a algunas APIs nativas (binding de librerías Java como Porcupine).
 

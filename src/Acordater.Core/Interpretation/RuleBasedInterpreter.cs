@@ -10,6 +10,9 @@ namespace Acordater.Core.Interpretation;
 /// </summary>
 public sealed class RuleBasedInterpreter(TimeProvider time) : IReminderInterpreter
 {
+    /// <summary>Value of <see cref="InterpretedReminder.Interpreter"/> for results of this interpreter.</summary>
+    public const string Name = "rules";
+
     enum Period { Morning, Afternoon, Night }
 
     const RegexOptions Options = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;

@@ -70,6 +70,9 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<!-- AI interpretation (docs/spec.md, section 5): Claude through the official SDK; OpenAI and Gemini (OpenAI-compatible endpoint) through OpenAI's. -->
+		<PackageReference Include="Anthropic" Version="12.52.0" />
+		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.10.1" />
 	</ItemGroup>
 
 	<ItemGroup>

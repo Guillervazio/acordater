@@ -43,4 +43,25 @@
   <data name="SpeechUnavailable" xml:space="preserve"><value>Speech recognition is not available in this language. If the language pack is downloading, try again in a few minutes.</value></data>
   <data name="SpeechFailed" xml:space="preserve"><value>I couldn't hear you ({0}). Please try again.</value></data>
   <data name="AlarmSpeech" xml:space="preserve"><value>Reminder: {0}</value></data>
+  <data name="Interpreting" xml:space="preserve"><value>Interpreting…</value></data>
+  <data name="InterpretedWith" xml:space="preserve"><value>Interpreted with: {0}</value></data>
+  <data name="InterpretedByRules" xml:space="preserve"><value>rules (no AI)</value></data>
+  <data name="InterpretedFallback" xml:space="preserve"><value>rules (fallback, {0}: {1})</value></data>
+  <data name="FailureTimeout" xml:space="preserve"><value>did not answer in time</value></data>
+  <data name="FailureNetwork" xml:space="preserve"><value>no connection</value></data>
+  <data name="FailureProvider" xml:space="preserve"><value>provider error</value></data>
+  <data name="FailureInvalid" xml:space="preserve"><value>invalid answer</value></data>
+  <data name="AiTitle" xml:space="preserve"><value>AI interpretation</value></data>
+  <data name="AiDescription" xml:space="preserve"><value>Optional. With your own API key, an AI understands freer phrases. If it fails, there is no connection or it takes more than a few seconds, the offline rules are used.</value></data>
+  <data name="AiProviderLabel" xml:space="preserve"><value>Provider</value></data>
+  <data name="AiProviderNone" xml:space="preserve"><value>No AI (rules)</value></data>
+  <data name="AiApiKey" xml:space="preserve"><value>API key</value></data>
+  <data name="AiApiKeyPlaceholder" xml:space="preserve"><value>Paste your API key</value></data>
+  <data name="AiModel" xml:space="preserve"><value>Model (optional)</value></data>
+  <data name="AiKeyMissing" xml:space="preserve"><value>The API key is missing.</value></data>
+  <data name="AiTest" xml:space="preserve"><value>Test</value></data>
+  <data name="AiTestRunning" xml:space="preserve"><value>Testing…</value></data>
+  <data name="AiTestSample" xml:space="preserve"><value>remind me tomorrow at 9 pm to take out the trash</value></data>
+  <data name="AiTestOk" xml:space="preserve"><value>It works ({0:0.0} s): “{1}”, {2}.</value></data>
+  <data name="AiTestFailed" xml:space="preserve"><value>Failed ({0}): {1}</value></data>
 </root>

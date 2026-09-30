@@ -43,4 +43,25 @@
   <data name="SpeechUnavailable" xml:space="preserve"><value>El reconocimiento de voz no está disponible en este idioma. Si se está descargando el paquete de voz, prueba de nuevo en unos minutos.</value></data>
   <data name="SpeechFailed" xml:space="preserve"><value>No pude escucharte ({0}). Prueba de nuevo.</value><comment>{0} = Android error code name</comment></data>
   <data name="AlarmSpeech" xml:space="preserve"><value>Recuerda: {0}</value><comment>{0} = reminder text, read aloud while the alarm rings</comment></data>
+  <data name="Interpreting" xml:space="preserve"><value>Interpretando…</value></data>
+  <data name="InterpretedWith" xml:space="preserve"><value>Interpretado con: {0}</value><comment>{0} = provider name or InterpretedByRules / InterpretedFallback</comment></data>
+  <data name="InterpretedByRules" xml:space="preserve"><value>reglas (sin IA)</value></data>
+  <data name="InterpretedFallback" xml:space="preserve"><value>reglas (respaldo, {0}: {1})</value><comment>{0} = provider, {1} = FailureXxx</comment></data>
+  <data name="FailureTimeout" xml:space="preserve"><value>no respondió a tiempo</value></data>
+  <data name="FailureNetwork" xml:space="preserve"><value>sin conexión</value></data>
+  <data name="FailureProvider" xml:space="preserve"><value>error del proveedor</value></data>
+  <data name="FailureInvalid" xml:space="preserve"><value>respuesta no válida</value></data>
+  <data name="AiTitle" xml:space="preserve"><value>Interpretación con IA</value></data>
+  <data name="AiDescription" xml:space="preserve"><value>Opcional. Con tu propia API key, una IA entiende frases más libres. Si falla, no hay conexión o tarda más de unos segundos, se usan las reglas sin conexión.</value></data>
+  <data name="AiProviderLabel" xml:space="preserve"><value>Proveedor</value></data>
+  <data name="AiProviderNone" xml:space="preserve"><value>Sin IA (reglas)</value></data>
+  <data name="AiApiKey" xml:space="preserve"><value>API key</value></data>
+  <data name="AiApiKeyPlaceholder" xml:space="preserve"><value>Pega tu API key</value></data>
+  <data name="AiModel" xml:space="preserve"><value>Modelo (opcional)</value></data>
+  <data name="AiKeyMissing" xml:space="preserve"><value>Falta la API key.</value></data>
+  <data name="AiTest" xml:space="preserve"><value>Probar</value></data>
+  <data name="AiTestRunning" xml:space="preserve"><value>Probando…</value></data>
+  <data name="AiTestSample" xml:space="preserve"><value>recordame mañana a las 9 de la noche sacar la basura</value><comment>Sample phrase interpreted by the Test button</comment></data>
+  <data name="AiTestOk" xml:space="preserve"><value>Funciona ({0:0.0} s): «{1}», {2}.</value><comment>{0} = seconds, {1} = reminder text, {2} = when</comment></data>
+  <data name="AiTestFailed" xml:space="preserve"><value>Falló ({0}): {1}</value><comment>{0} = FailureXxx, {1} = technical detail</comment></data>
 </root>

@@ -35,6 +35,12 @@
                     BackgroundColor="Transparent"
                     TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
 
+            <Label Text="{Binding InterpreterNote}"
+                   FontSize="12"
+                   TextColor="{StaticResource Gray500}"
+                   HorizontalOptions="Center"
+                   Margin="0,8,0,0" />
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

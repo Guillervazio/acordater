@@ -27,7 +27,31 @@
 
             <Label Text="{x:Static strings:AppResources.QuietDisabledHint}" FontSize="13" TextColor="{StaticResource Gray500}" />
 
-            <Button Text="{x:Static strings:AppResources.Save}" Command="{Binding SaveCommand}" />
+            <!-- AI interpretation (docs/spec.md, section 5) -->
+            <Label Text="{x:Static strings:AppResources.AiTitle}" FontSize="20" FontAttributes="Bold" Margin="0,16,0,0" />
+            <Label Text="{x:Static strings:AppResources.AiDescription}" />
+
+            <Picker Title="{x:Static strings:AppResources.AiProviderLabel}"
+                    ItemsSource="{Binding ProviderNames}"
+                    SelectedIndex="{Binding SelectedProviderIndex}" />
+
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding IsAiEnabled}">
+                <Label Text="{x:Static strings:AppResources.AiApiKey}" FontAttributes="Bold" />
+                <Entry Text="{Binding ApiKey}"
+                       IsPassword="True"
+                       IsSpellCheckEnabled="False"
+                       IsTextPredictionEnabled="False"
+                       Placeholder="{x:Static strings:AppResources.AiApiKeyPlaceholder}" />
+                <Label Text="{x:Static strings:AppResources.AiModel}" FontAttributes="Bold" />
+                <Entry Text="{Binding Model}"
+                       IsSpellCheckEnabled="False"
+                       IsTextPredictionEnabled="False"
+                       Placeholder="{Binding ModelPlaceholder}" />
+                <Button Text="{x:Static strings:AppResources.AiTest}" Command="{Binding TestAiCommand}" />
+                <Label Text="{Binding TestResult}" FontSize="13" />
+            </VerticalStackLayout>
+
+            <Button Text="{x:Static strings:AppResources.Save}" Command="{Binding SaveCommand}" Margin="0,16,0,0" />
 
         </VerticalStackLayout>
     </ScrollView>

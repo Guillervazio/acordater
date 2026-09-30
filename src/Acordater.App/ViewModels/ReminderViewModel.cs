@@ -1,4 +1,5 @@
 using System.Globalization;
+using Acordater.App.Interpretation;
 using Acordater.App.Resources.Strings;
 using Acordater.App.Voice;
 using Acordater.Core;
@@ -60,6 +61,10 @@ public sealed partial class ReminderViewModel(
 	[ObservableProperty]
 	public partial string SaveLabel { get; set; } = AppResources.Save;
 
+	/// <summary>Which interpreter understood a new reminder (AI provider, rules, or rules as a fallback); empty when editing.</summary>
+	[ObservableProperty]
+	public partial string InterpreterNote { get; set; } = "";
+
 	public DateTime MinimumDate => time.GetLocalNow().Date;
 
 	public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -76,6 +81,7 @@ public sealed partial class ReminderViewModel(
 			Title = AppResources.NewReminderTitle;
 			Text = draft.Text;
 			originalRequest = draft.RequestedAt;
+			InterpreterNote = InterpreterDescription.Describe(draft);
 		}
 		confirmByVoice = query.TryGetValue(SpokenKey, out value) && value is true;
 

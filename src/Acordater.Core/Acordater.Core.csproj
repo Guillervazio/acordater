@@ -7,4 +7,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- IChatClient: the provider-neutral abstraction behind ChatInterpreter (docs/spec.md, section 5). -->
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.1" />
+  </ItemGroup>
+
 </Project>
