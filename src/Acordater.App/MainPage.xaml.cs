@@ -13,7 +13,11 @@ public partial class MainPage : ContentPage
 		BindingContext = this.viewModel = viewModel;
 
 		// Reminders can change while the app is in the background (Done / Snooze from the notification).
-		Loaded += (_, _) => Window.Resumed += async (_, _) => await viewModel.LoadCommand.ExecuteAsync(null);
+		Loaded += (_, _) => Window.Resumed += async (_, _) =>
+		{
+			await viewModel.LoadCommand.ExecuteAsync(null);
+			await viewModel.EnsureWakeWordAsync();
+		};
 
 		// The root page lives as long as its window, also while other pages are pushed on top.
 		CaptureRequests.Raised += OnCaptureRequested;
@@ -31,6 +35,7 @@ public partial class MainPage : ContentPage
 		await AlarmPermissions.RequestAsync(this);
 		await viewModel.LoadCommand.ExecuteAsync(null);
 		await ListenIfRequestedAsync();
+		await viewModel.EnsureWakeWordAsync();
 	}
 
 	// Widget or quick settings tile while the app is already running.

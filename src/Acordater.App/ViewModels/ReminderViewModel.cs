@@ -139,13 +139,15 @@ public sealed partial class ReminderViewModel(
 			await Shell.Current.DisplayAlertAsync(AppResources.AppTitle, AppResources.ReminderGone, AppResources.Ok);
 
 		await Shell.Current.GoToAsync("..");
+		CaptureRequests.End();
 	}
 
 	[RelayCommand]
-	Task CancelAsync()
+	async Task CancelAsync()
 	{
 		StopAutoSave();
-		return Shell.Current.GoToAsync("..");
+		await Shell.Current.GoToAsync("..");
+		CaptureRequests.End();
 	}
 
 	partial void OnTextChanged(string value) => OnUserChange();

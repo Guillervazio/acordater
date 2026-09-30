@@ -66,7 +66,7 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 
 ### 4.5 Captura por voz
 
-1. El usuario activa la captura (botón en la app, widget o acceso rápido; más adelante palabra clave).
+1. El usuario activa la captura: botón en la app, widget, acceso rápido (4.6) o palabra clave (4.7).
 2. Voz → texto con el reconocimiento de voz **en el dispositivo** (sin conexión), en el idioma del teléfono. Tocar de nuevo el botón termina de escuchar. Si falta el paquete de ese idioma, se pide su descarga y mientras tanto se usa el servicio de reconocimiento por defecto de Android.
 3. El intérprete extrae **qué** recordar y **cuándo** (si se dijo): las reglas sin conexión o, si se configuró, un proveedor de IA (sección 5). Mientras espera, el botón muestra "Interpretando…".
 4. La app confirma lo que entendió en pantalla y en voz ("Te recuerdo *limpiar la caja del gato* hoy a las 16:30") y permite corregirlo antes de guardar. Tras leerlo, **se guarda solo a los 5 s** si el usuario no toca nada; tocar cualquier campo cancela la cuenta atrás.
@@ -77,6 +77,39 @@ La creación y edición por texto también debe existir (sirve para corregir y c
 ### 4.6 Accesos rápidos
 
 - **Widget** en la pantalla de inicio ("¿Qué te recuerdo?") y **botón en los ajustes rápidos** ("Nuevo recordatorio"). Los dos abren la app escuchando directamente; desde el botón rápido con el teléfono bloqueado, primero se pide desbloquearlo.
+
+### 4.7 Palabra clave ("hey Cordie")
+
+Decir la palabra clave abre la captura por voz (4.5), igual que el widget, **también con el teléfono bloqueado y la pantalla apagada**.
+
+- **Motor:** Picovoice Porcupine (`ai.picovoice:porcupine-android` 4.0.2), en el dispositivo. Necesita una **AccessKey** de Picovoice, que se valida por internet al activarlo. La AccessKey se ingresa en Ajustes y se guarda en `SecureStorage`.
+- **Modelo:** el modelo propio "Hey Cordie" (`.ppn`, entrenado en Picovoice Console para Android) se importa desde Ajustes con un selector de archivos, sin recompilar. Si el modelo es en español, también hay que importar el archivo de parámetros del idioma (`porcupine_params_es.pv`). Mientras no haya un modelo propio, se usa la palabra incluida **"Jarvis"** (modelo en inglés), para probar el circuito completo solo con la AccessKey. "Volver a la palabra incluida" borra el modelo importado.
+- **Activación:** interruptor en Ajustes, **apagado por defecto**. Al activarlo se piden los permisos de micrófono y de notificaciones.
+- Corre en un **servicio en primer plano de tipo micrófono** con una **notificación permanente** ("Escuchando «Jarvis»"), que tiene el botón **Desactivar** (apaga también el interruptor).
+- **Al detectar la palabra:**
+  - con la app en pantalla, empieza a escuchar directamente;
+  - si no, Android (10+) no deja abrir una actividad desde segundo plano. Igual que la alarma, se publica una notificación de **pantalla completa**: con el teléfono bloqueado o la pantalla apagada, enciende la pantalla y abre la captura **sobre la pantalla de bloqueo** (`showWhenLocked` solo para esa captura). Al guardar o cancelar, la app vuelve detrás del bloqueo. Con el teléfono desbloqueado y en uso, Android la muestra como aviso emergente ("¿Qué te recuerdo? Toca para dictar"), que hay que tocar;
+  - depende del permiso de notificaciones de pantalla completa que ya pide la alarma.
+- **Pausas:** el detector suelta el micrófono mientras la app escucha (el reconocimiento de voz lo necesita), durante 30 s después de cada detección (para que la captura lo tenga libre) y mientras suena una alarma. Después se reanuda solo.
+- **Reinicio y actualización:** Android 14+ no permite arrancar un servicio en primer plano de micrófono desde segundo plano ni desde `BOOT_COMPLETED`. Tras reiniciar el teléfono o actualizar la app, si la palabra clave estaba activa, se muestra una notificación "La palabra clave está en pausa"; tocarla abre la app, que la reactiva. También se reactiva sola **cada vez que se abre la app**. Si el sistema detiene el servicio y no lo puede recrear, se muestra la misma notificación.
+- **Optimización de batería:** no se pide la exención. Un servicio en primer plano ya sigue funcionando en Doze con la batería en "Optimizada" (la opción por defecto). Solo si en las pruebas el Pixel lo detiene, se configura a mano "Sin restricciones" en la información de la app.
+- **Privacidad:** el audio se procesa en el teléfono. A Picovoice solo llega la validación de la AccessKey.
+- **Licencia de Porcupine (riesgo abierto, 30/09/2026):** Picovoice cerró su plan gratuito el 30/06/2026 (las AccessKeys gratuitas dejaron de funcionar) y su FAQ indica que no tiene planes para uso personal o no comercial: solo ofrece una prueba gratuita única para empresas, que no se renueva. Sirve para hacer este spike y medir la batería, pero no para uso continuado en una app personal. Si el resultado es "sí", la alternativa prevista es **openWakeWord** (código abierto, sin cuenta), cambiando solo el motor dentro de `WakeWordService`: `IWakeWordDetector`, el servicio, las notificaciones, las pausas y la apertura de la captura se mantienen.
+
+**Criterio de batería (decisión de la fase 5).** Se mide el consumo **adicional** con el detector activo, con la pantalla apagada y el teléfono en reposo, comparado con el mismo período sin detector:
+
+| Consumo adicional | Decisión |
+|---|---|
+| ≤ 1 %/h (≤ ~8 % en una noche) | **Sí**: se deja como función normal (sigue opcional). |
+| 1–2 %/h | **Sí, con condiciones**: se recomienda activarlo solo en ciertos momentos (p. ej. en casa o cargando). |
+| > 2 %/h | **No**: se retira del alcance o se busca otro motor. |
+
+**Procedimiento de medición** (en el Pixel, cada tramo de al menos 2 h, en condiciones parecidas: wifi encendido, sin usar el teléfono, sin cargar):
+
+1. Tramo A (referencia): palabra clave desactivada. `adb shell dumpsys batterystats --reset`, anotar `adb shell dumpsys battery` (campo `level`), desconectar el cable o la depuración inalámbrica y dejar el teléfono con la pantalla apagada.
+2. Al terminar: anotar otra vez `level` y guardar `adb shell dumpsys batterystats --charged com.acordater.app`.
+3. Tramo B: palabra clave activada, repetir los pasos 1 y 2.
+4. Consumo adicional = (caída de B − caída de A) / horas. Para ver el detalle por componente se puede generar `adb bugreport` y abrirlo en Battery Historian.
 
 ## 5. Interpretación del lenguaje
 
@@ -122,6 +155,7 @@ Notas técnicas de Android:
 - `POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`, `RECEIVE_BOOT_COMPLETED` (reprogramar tras reiniciar).
 - Canal de notificación con `AudioAttributes.USAGE_ALARM` para sonar en modo silencio.
 - Voz a texto: `SpeechRecognizer` en el dispositivo. Texto a voz: `TextToSpeech`.
+- Palabra clave: Porcupine enlazado desde Maven (`AndroidMavenLibrary`), en un servicio en primer plano de tipo micrófono (`FOREGROUND_SERVICE_MICROPHONE`).
 
 ## 7. Fases
 
@@ -132,14 +166,14 @@ Notas técnicas de Android:
 | 2 | App MVP por texto: crear/listar/editar, SQLite, alarmas, notificación con Hecho/Posponer, sonido en silencio, reprogramar tras reiniciar | Recordatorio real que insiste cada hora hasta marcarlo | Hecha |
 | 3 | Voz: captura por voz sin conexión, confirmación, lectura en voz alta del aviso | Crear un recordatorio solo hablando | Hecha |
 | 4 | Accesos rápidos: widget y botón en ajustes rápidos (4.6) | Capturar sin abrir la app | Hecha |
-| 5 | **Spike** de palabra clave ("hey Cordie") con el teléfono bloqueado: Porcupine u openWakeWord + servicio en primer plano; medir batería | Decisión: sí/no y cómo | |
+| 5 | **Spike** de palabra clave ("hey Cordie") con el teléfono bloqueado (4.7): Porcupine + servicio en primer plano; medir batería con el criterio de 4.7 | Decisión: sí/no y cómo | Implementada; falta probar en el Pixel |
 | 6 | Modo IA multiproveedor (Claude, OpenAI, Gemini con API key propia) con respaldo en reglas (sección 5). Gemini Nano descartado por ahora | Frases libres interpretadas correctamente con cada proveedor | Implementada; falta probar en el Pixel |
 | 7 | Versión Windows | La app corre en Windows | |
 | Futuro | Listas (p. ej. compras como un único recordatorio) | — | |
 
 ## 8. Riesgos
 
-- **Palabra clave con el teléfono bloqueado:** Android restringe el micrófono en segundo plano (hace falta un servicio en primer plano con notificación permanente) y el consumo de batería es real. Por eso está aislado en la fase 5 y el MVP no depende de ello.
+- **Palabra clave con el teléfono bloqueado:** Android restringe el micrófono en segundo plano (hace falta un servicio en primer plano con notificación permanente), no deja reactivarlo solo tras reiniciar y el consumo de batería es real. Por eso está aislado en la fase 5, es opcional y el MVP no depende de ello. Porcupine además depende de una cuenta de Picovoice, que ya no tiene plan gratuito ni personal (ver 4.7).
 - **Modo IA:** depende de servicios externos y de sus nombres de modelo, que cambian (los modelos por defecto se pueden cambiar en Ajustes sin recompilar). El respaldo en reglas hace que nunca bloquee la creación de recordatorios.
 - **Optimización de batería / Doze:** puede retrasar las alarmas si no son exactas; hay que verificarlo en el dispositivo real.
 - **Asperezas de MAUI** en herramientas y en el acceso a algunas APIs nativas (binding de librerías Java como Porcupine).

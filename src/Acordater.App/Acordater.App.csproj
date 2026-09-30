@@ -75,6 +75,17 @@
 		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.10.1" />
 	</ItemGroup>
 
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<!-- Wake word (docs/spec.md, section 4.7): Picovoice Porcupine, bound from Maven (C# namespace Picovoice.WakeWord,
+		     see Transforms/Picovoice.xml). Its dependencies: the voice processor, OkHttp (AccessKey validation) and androidx.core. -->
+		<AndroidMavenLibrary Include="ai.picovoice:porcupine-android" Version="4.0.2" />
+		<AndroidMavenLibrary Include="ai.picovoice:android-voice-processor" Version="1.0.2" />
+		<TransformFile Include="Platforms\Android\Transforms\Picovoice.xml" />
+		<PackageReference Include="Square.OkHttp3" Version="4.12.0.10" />
+		<!-- Same version MAUI already brings in; referenced directly so Java dependency verification sees it. -->
+		<PackageReference Include="Xamarin.AndroidX.Core" Version="1.16.0.3" />
+	</ItemGroup>
+
 	<ItemGroup>
 	  <ProjectReference Include="..\Acordater.Core\Acordater.Core.csproj" />
 	  <ProjectReference Include="..\Acordater.Data\Acordater.Data.csproj" />

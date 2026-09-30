@@ -12,8 +12,9 @@
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
 	<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 	<uses-permission android:name="android.permission.VIBRATE" />
-	<!-- Voice capture (AndroidSpeechRecognizer) -->
+	<!-- Voice capture (AndroidSpeechRecognizer) and wake word (WakeWordService) -->
 	<uses-permission android:name="android.permission.RECORD_AUDIO" />
+	<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
 	<!-- Android 11+ package visibility: find the speech recognition and text to speech services. -->
 	<queries>
 		<intent>

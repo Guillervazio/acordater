@@ -37,6 +37,7 @@ public sealed class AlarmRingingService : Service, TextToSpeech.IOnInitListener
 	TextToSpeech? speech;
 	bool speechReady;
 	Guid? announcedId;
+	IDisposable? wakeWordPause;
 	readonly Handler handler = new(Looper.MainLooper!);
 	Java.Lang.Runnable? nextAnnouncement;
 
@@ -107,6 +108,9 @@ public sealed class AlarmRingingService : Service, TextToSpeech.IOnInitListener
 	void StartAlarm()
 	{
 		if (player is not null) return;
+
+		// The wake word must not react to the alarm (or its reading) and gets its microphone back afterwards.
+		wakeWordPause ??= WakeWordService.Pause();
 
 		try
 		{
@@ -187,6 +191,8 @@ public sealed class AlarmRingingService : Service, TextToSpeech.IOnInitListener
 		player = null;
 		vibrator?.Cancel();
 		vibrator = null;
+		wakeWordPause?.Dispose();
+		wakeWordPause = null;
 	}
 
 	/// <summary>Resumes the alarm sound when a reading ends. Interrupted readings are followed by a new one, so OnStop is ignored.</summary>

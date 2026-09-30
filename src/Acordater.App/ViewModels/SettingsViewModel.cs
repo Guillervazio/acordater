@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using Acordater.App.Interpretation;
 using Acordater.App.Resources.Strings;
+using Acordater.App.Voice;
 using Acordater.Core.Scheduling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,6 +13,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 {
 	readonly QuietHoursSettings settings;
 	readonly AiSettings ai;
+	readonly WakeWordSettings wakeWordSettings;
+	readonly IWakeWordDetector wakeWord;
 	readonly ReminderScheduler scheduler;
 	readonly ReminderTimeFormatter formatter;
 	readonly TimeProvider time;
@@ -20,16 +23,21 @@ public sealed partial class SettingsViewModel : ObservableObject
 	readonly Dictionary<AiProvider, string> apiKeys = [];
 	readonly Dictionary<AiProvider, string> models = [];
 	bool loaded;
+	bool changingWakeWord;
 
 	public SettingsViewModel(
 		QuietHoursSettings settings,
 		AiSettings ai,
+		WakeWordSettings wakeWordSettings,
+		IWakeWordDetector wakeWord,
 		ReminderScheduler scheduler,
 		ReminderTimeFormatter formatter,
 		TimeProvider time)
 	{
 		this.settings = settings;
 		this.ai = ai;
+		this.wakeWordSettings = wakeWordSettings;
+		this.wakeWord = wakeWord;
 		this.scheduler = scheduler;
 		this.formatter = formatter;
 		this.time = time;
@@ -77,6 +85,26 @@ public sealed partial class SettingsViewModel : ObservableObject
 	[ObservableProperty]
 	public partial string TestResult { get; set; } = "";
 
+	// Wake word (docs/spec.md, section 4.7).
+
+	[ObservableProperty]
+	public partial bool WakeWordEnabled { get; set; }
+
+	[ObservableProperty]
+	public partial string AccessKey { get; set; } = "";
+
+	[ObservableProperty]
+	public partial string WakeWordModel { get; set; } = "";
+
+	[ObservableProperty]
+	public partial string WakeWordParameters { get; set; } = "";
+
+	[ObservableProperty]
+	public partial bool HasCustomWakeWord { get; set; }
+
+	[ObservableProperty]
+	public partial string WakeWordStatus { get; set; } = "";
+
 	/// <summary>Called when the page appears: secrets come from SecureStorage, which is async.</summary>
 	public async Task LoadAsync()
 	{
@@ -87,9 +115,14 @@ public sealed partial class SettingsViewModel : ObservableObject
 			apiKeys[provider] = await ai.GetApiKeyAsync(provider);
 			models[provider] = ai.GetModel(provider);
 		}
+		AccessKey = await wakeWordSettings.GetAccessKeyAsync();
 		loaded = true;
 
 		SelectedProviderIndex = Math.Max(0, AiProviders.All.ToList().IndexOf(ai.Provider));
+		changingWakeWord = true;
+		WakeWordEnabled = wakeWordSettings.Enabled;
+		changingWakeWord = false;
+		UpdateWakeWordInfo();
 	}
 
 	partial void OnSelectedProviderIndexChanging(int oldValue, int newValue)
@@ -150,6 +183,115 @@ public sealed partial class SettingsViewModel : ObservableObject
 		}
 	}
 
+	async partial void OnWakeWordEnabledChanged(bool value)
+	{
+		if (changingWakeWord) return;
+
+		if (!value)
+		{
+			wakeWordSettings.Enabled = false;
+			wakeWord.Stop();
+			UpdateWakeWordInfo();
+			return;
+		}
+
+		if (string.IsNullOrWhiteSpace(AccessKey))
+		{
+			SetWakeWordSwitch(false);
+			WakeWordStatus = AppResources.WakeWordNeedsKey;
+			return;
+		}
+
+		await wakeWordSettings.SetAccessKeyAsync(AccessKey);
+		WakeWordStatus = AppResources.WakeWordStarting;
+		try
+		{
+			await wakeWord.StartAsync();
+			wakeWordSettings.Enabled = true;
+			UpdateWakeWordInfo();
+		}
+		catch (WakeWordUnavailableException ex)
+		{
+			wakeWordSettings.Enabled = false;
+			SetWakeWordSwitch(false);
+			WakeWordStatus = ex.Message;
+		}
+	}
+
+	[RelayCommand]
+	Task ImportWakeWordModelAsync() =>
+		ImportAsync(".ppn", AppResources.WakeWordImportModel, wakeWordSettings.ImportKeywordAsync);
+
+	[RelayCommand]
+	Task ImportWakeWordParametersAsync() =>
+		ImportAsync(".pv", AppResources.WakeWordImportParameters, wakeWordSettings.ImportParametersAsync);
+
+	[RelayCommand]
+	async Task RemoveWakeWordModelAsync()
+	{
+		wakeWordSettings.RemoveCustomModel();
+		await RestartWakeWordAsync();
+		UpdateWakeWordInfo();
+	}
+
+	async Task ImportAsync(string extension, string title, Func<Stream, string, Task> import)
+	{
+		// .ppn and .pv have no MIME type, so any file can be picked and the extension is checked here.
+		var file = await FilePicker.Default.PickAsync(new PickOptions { PickerTitle = title });
+		if (file is null) return;
+
+		if (!file.FileName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+		{
+			WakeWordStatus = string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordWrongFile, extension);
+			return;
+		}
+
+		await using (var stream = await file.OpenReadAsync())
+			await import(stream, file.FileName);
+		await RestartWakeWordAsync();
+		UpdateWakeWordInfo();
+	}
+
+	/// <summary>Applies a new model to a running detector.</summary>
+	async Task RestartWakeWordAsync()
+	{
+		if (!wakeWord.IsRunning) return;
+
+		wakeWord.Stop();
+		try
+		{
+			await wakeWord.StartAsync();
+		}
+		catch (WakeWordUnavailableException ex)
+		{
+			wakeWordSettings.Enabled = false;
+			SetWakeWordSwitch(false);
+			WakeWordStatus = ex.Message;
+		}
+	}
+
+	void SetWakeWordSwitch(bool value)
+	{
+		changingWakeWord = true;
+		WakeWordEnabled = value;
+		changingWakeWord = false;
+	}
+
+	void UpdateWakeWordInfo()
+	{
+		var phrase = wakeWordSettings.Phrase;
+		HasCustomWakeWord = wakeWordSettings.HasCustomKeyword || wakeWordSettings.HasCustomParameters;
+		WakeWordModel = wakeWordSettings.HasCustomKeyword
+			? string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordModelCustom, phrase)
+			: string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordModelBuiltIn, phrase);
+		WakeWordParameters = wakeWordSettings.ParametersName is { } parameters
+			? string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordParametersCustom, parameters)
+			: AppResources.WakeWordParametersBuiltIn;
+		WakeWordStatus = wakeWord.IsRunning
+			? string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordActive, phrase)
+			: wakeWordSettings.Enabled && wakeWord.LastError is { } error ? error : AppResources.WakeWordInactive;
+	}
+
 	[RelayCommand]
 	async Task SaveAsync()
 	{
@@ -167,6 +309,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 			foreach (var (provider, model) in models)
 				ai.SetModel(provider, model);
 			ai.Provider = SelectedProvider;
+			await wakeWordSettings.SetAccessKeyAsync(AccessKey);
 		}
 
 		await Shell.Current.GoToAsync("..");

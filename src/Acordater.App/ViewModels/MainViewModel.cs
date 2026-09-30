@@ -19,7 +19,9 @@ public sealed partial class MainViewModel(
 	IReminderInterpreter interpreter,
 	ISpeechRecognizer speech,
 	ReminderTimeFormatter formatter,
-	QuietHoursSettings quietHours) : ObservableObject
+	QuietHoursSettings quietHours,
+	IWakeWordDetector wakeWord,
+	WakeWordSettings wakeWordSettings) : ObservableObject
 {
 	CancellationTokenSource? listening;
 
@@ -67,14 +69,18 @@ public sealed partial class MainViewModel(
 		using var session = listening = new CancellationTokenSource();
 		IsListening = true;
 		NewReminderText = "";
+		var confirming = false;
 		try
 		{
-			var heard = await speech.ListenAsync(partial => NewReminderText = partial, session.Token);
+			string? heard;
+			// The wake word detector gives the microphone to the speech recognizer meanwhile.
+			using (wakeWord.Pause())
+				heard = await speech.ListenAsync(partial => NewReminderText = partial, session.Token);
 			if (string.IsNullOrWhiteSpace(heard)) return;
 
 			NewReminderText = heard;
 			IsListening = false;
-			await ConfirmAsync(spoken: true);
+			confirming = await ConfirmAsync(spoken: true);
 		}
 		catch (SpeechUnavailableException ex)
 		{
@@ -84,6 +90,24 @@ public sealed partial class MainViewModel(
 		{
 			listening = null;
 			IsListening = false;
+			if (!confirming) CaptureRequests.End();
+		}
+	}
+
+	/// <summary>
+	/// Turns the wake word back on when it should be listening but is not (after a reboot, an app update or being
+	/// stopped by the system): only possible while the app is in the foreground on Android 14+.
+	/// </summary>
+	public async Task EnsureWakeWordAsync()
+	{
+		if (!wakeWordSettings.Enabled || wakeWord.IsRunning) return;
+		try
+		{
+			await wakeWord.StartAsync();
+		}
+		catch (WakeWordUnavailableException ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"Wake word not restarted: {ex.Message}");
 		}
 	}
 

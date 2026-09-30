@@ -51,6 +51,33 @@
                 <Label Text="{Binding TestResult}" FontSize="13" />
             </VerticalStackLayout>
 
+            <!-- Wake word (docs/spec.md, section 4.7) -->
+            <Label Text="{x:Static strings:AppResources.WakeWordTitle}" FontSize="20" FontAttributes="Bold" Margin="0,16,0,0" />
+            <Label Text="{x:Static strings:AppResources.WakeWordDescription}" />
+
+            <Label Text="{x:Static strings:AppResources.WakeWordAccessKey}" FontAttributes="Bold" />
+            <Entry Text="{Binding AccessKey}"
+                   IsPassword="True"
+                   IsSpellCheckEnabled="False"
+                   IsTextPredictionEnabled="False"
+                   Placeholder="{x:Static strings:AppResources.WakeWordAccessKeyPlaceholder}" />
+
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                <Label Text="{x:Static strings:AppResources.WakeWordEnable}" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding WakeWordEnabled}" />
+            </Grid>
+            <Label Text="{Binding WakeWordStatus}" FontSize="13" />
+
+            <Label Text="{Binding WakeWordModel}" />
+            <Label Text="{Binding WakeWordParameters}" FontSize="13" TextColor="{StaticResource Gray500}" />
+            <Button Text="{x:Static strings:AppResources.WakeWordImportModel}" Command="{Binding ImportWakeWordModelCommand}" />
+            <Button Text="{x:Static strings:AppResources.WakeWordImportParameters}" Command="{Binding ImportWakeWordParametersCommand}" />
+            <Button Text="{x:Static strings:AppResources.WakeWordRemoveModel}"
+                    Command="{Binding RemoveWakeWordModelCommand}"
+                    IsVisible="{Binding HasCustomWakeWord}"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+
             <Button Text="{x:Static strings:AppResources.Save}" Command="{Binding SaveCommand}" Margin="0,16,0,0" />
 
         </VerticalStackLayout>
