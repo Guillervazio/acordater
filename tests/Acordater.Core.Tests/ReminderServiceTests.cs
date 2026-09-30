@@ -86,6 +86,25 @@ public class ReminderServiceTests
     }
 
     [Fact]
+    public async Task EveryChangeIsAnnounced()
+    {
+        var changes = 0;
+        service.Changed += () => changes++;
+
+        var reminder = await AddAsync(Local(29, 10, 5));
+        time.SetLocalNow(29, 10, 5);
+        await service.AlertAsync(reminder.Id);
+        await service.SnoozeAsync(reminder.Id);
+        await service.EditAsync(reminder.Id, "y", Local(29, 18));
+        await service.CompleteAsync(reminder.Id);
+        Assert.Equal(5, changes);
+
+        await service.CompleteAsync(reminder.Id); // already done: nothing changes
+        await service.RescheduleAllAsync();
+        Assert.Equal(5, changes);
+    }
+
+    [Fact]
     public async Task EditStoresChangesDismissesAndMovesAlarm()
     {
         var reminder = await AddAsync(Local(29, 12));

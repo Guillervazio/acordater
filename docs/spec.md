@@ -67,7 +67,7 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 ### 4.5 Captura por voz
 
 1. El usuario activa la captura: botón en la app, widget, acceso rápido (4.6) o palabra clave (4.7).
-2. Voz → texto con el reconocimiento de voz **en el dispositivo** (sin conexión), en el idioma elegido en Ajustes (ver "Idioma" más abajo). Tocar de nuevo el botón termina de escuchar. Si falta el paquete de ese idioma, se pide su descarga y mientras tanto se usa el servicio de reconocimiento por defecto de Android.
+2. Voz → texto con el reconocimiento de voz **en el dispositivo** (sin conexión), en el idioma elegido en Ajustes (ver "Idioma" más abajo). Cuando la captura no empezó con el botón (palabra clave, widget o acceso rápido), antes de escuchar la app dice "Dime" ("I'm listening") en el idioma de la voz, para saber cuándo hablar. Tocar de nuevo el botón termina de escuchar. Si falta el paquete de ese idioma, se pide su descarga y mientras tanto se usa el servicio de reconocimiento por defecto de Android.
 3. El intérprete extrae **qué** recordar y **cuándo** (si se dijo): las reglas sin conexión o, si se configuró, un proveedor de IA (sección 5). Mientras espera, el botón muestra "Interpretando…".
 4. La app confirma lo que entendió en pantalla y en voz ("Te recuerdo *limpiar la caja del gato* hoy a las 16:30") y permite corregirlo antes de guardar. Tras leerlo, **se guarda solo a los 5 s** si el usuario no toca nada; tocar cualquier campo cancela la cuenta atrás.
 5. Si no se reconoce ningún tiempo, todo el texto es la tarea y se aplica la regla por defecto (+1 h).
@@ -99,8 +99,9 @@ Decir la palabra clave abre la captura por voz (4.5), igual que el widget, **tam
 - **Activación:** interruptor en Ajustes, **apagado por defecto**. Al activarlo se piden los permisos de micrófono y de notificaciones.
 - Corre en un **servicio en primer plano de tipo micrófono** con una **notificación permanente** ("Escuchando «Hey Jarvis»"), que tiene el botón **Desactivar** (apaga también el interruptor).
 - **Al detectar la palabra:**
-  - con la app en pantalla, empieza a escuchar directamente;
-  - si no, Android (10+) no deja abrir una actividad desde segundo plano. Igual que la alarma, se publica una notificación de **pantalla completa**: con el teléfono bloqueado o la pantalla apagada, enciende la pantalla y abre la captura **sobre la pantalla de bloqueo** (`showWhenLocked` solo para esa captura). Al guardar o cancelar, la app vuelve detrás del bloqueo. Con el teléfono desbloqueado y en uso, Android la muestra como aviso emergente ("¿Qué te recuerdo? Toca para dictar"), que hay que tocar;
+  - con la app en pantalla, empieza a escuchar directamente (tras decir "Dime", ver 4.5);
+  - si no, suena un pitido corto para indicar que la oyó, y además:
+  - Android (10+) no deja abrir una actividad desde segundo plano. Igual que la alarma, se publica una notificación de **pantalla completa**: con el teléfono bloqueado o la pantalla apagada, enciende la pantalla y abre la captura **sobre la pantalla de bloqueo** (`showWhenLocked` solo para esa captura). Al guardar o cancelar, la app vuelve detrás del bloqueo. Con el teléfono desbloqueado y en uso, Android la muestra como aviso emergente ("¿Qué te recuerdo? Toca para dictar"), que hay que tocar;
   - depende del permiso de notificaciones de pantalla completa que ya pide la alarma.
 - **Pausas:** el detector suelta el micrófono mientras la app escucha (el reconocimiento de voz lo necesita), durante 30 s después de cada detección (para que la captura lo tenga libre) y mientras suena una alarma. Después se reanuda solo.
 - **Reinicio y actualización:** Android 14+ no permite arrancar un servicio en primer plano de micrófono desde segundo plano ni desde `BOOT_COMPLETED`. Tras reiniciar el teléfono o actualizar la app, si la palabra clave estaba activa, se muestra una notificación "La palabra clave está en pausa"; tocarla abre la app, que la reactiva. También se reactiva sola **cada vez que se abre la app**. Si el sistema detiene el servicio y no lo puede recrear, se muestra la misma notificación.

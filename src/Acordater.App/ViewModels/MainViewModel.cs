@@ -21,9 +21,12 @@ public sealed partial class MainViewModel(
 	ReminderTimeFormatter formatter,
 	QuietHoursSettings quietHours,
 	IWakeWordDetector wakeWord,
-	WakeWordSettings wakeWordSettings) : ObservableObject
+	WakeWordSettings wakeWordSettings,
+	VoiceFeedback voice,
+	LanguageSettings language) : ObservableObject
 {
 	CancellationTokenSource? listening;
+	bool announce;
 
 	/// <summary>First run: quiet hours must be chosen before using the app.</summary>
 	public bool NeedsSetup => !quietHours.IsConfigured;
@@ -56,6 +59,16 @@ public sealed partial class MainViewModel(
 	[RelayCommand]
 	Task AddAsync() => ConfirmAsync(spoken: false);
 
+	/// <summary>
+	/// Capture started without looking at the phone (wake word, widget, tile): says that it is listening first,
+	/// so the user knows when to talk.
+	/// </summary>
+	public Task ListenOnRequestAsync()
+	{
+		announce = true;
+		return ListenCommand.ExecuteAsync(null);
+	}
+
 	/// <summary>Starts listening; while listening, a second tap means "I'm done talking".</summary>
 	[RelayCommand(AllowConcurrentExecutions = true)]
 	async Task ListenAsync()
@@ -75,12 +88,24 @@ public sealed partial class MainViewModel(
 			string? heard;
 			// The wake word detector gives the microphone to the speech recognizer meanwhile.
 			using (wakeWord.Pause())
+			{
+				if (announce)
+				{
+					announce = false;
+					var culture = language.VoiceCulture;
+					await voice.SpeakAsync(ReminderTimeFormatter.Text(nameof(AppResources.ListeningPrompt), culture), culture, session.Token);
+				}
 				heard = await speech.ListenAsync(partial => NewReminderText = partial, session.Token);
+			}
 			if (string.IsNullOrWhiteSpace(heard)) return;
 
 			NewReminderText = heard;
 			IsListening = false;
 			confirming = await ConfirmAsync(spoken: true);
+		}
+		catch (OperationCanceledException)
+		{
+			// Tapped while the prompt was being spoken.
 		}
 		catch (SpeechUnavailableException ex)
 		{

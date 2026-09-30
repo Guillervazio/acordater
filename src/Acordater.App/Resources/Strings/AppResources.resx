@@ -33,6 +33,7 @@
   <data name="Ok" xml:space="preserve"><value>Aceptar</value></data>
   <data name="Speak" xml:space="preserve"><value>🎤 Hablar</value></data>
   <data name="Listening" xml:space="preserve"><value>Escuchando… (toca para terminar)</value></data>
+  <data name="ListeningPrompt" xml:space="preserve"><value>Dime.</value><comment>Spoken before listening when the capture was not started from the button (wake word, widget, tile)</comment></data>
   <data name="NewReminderTitle" xml:space="preserve"><value>Nuevo recordatorio</value></data>
   <data name="EditReminderTitle" xml:space="preserve"><value>Editar recordatorio</value></data>
   <data name="ReminderTextLabel" xml:space="preserve"><value>Qué</value></data>

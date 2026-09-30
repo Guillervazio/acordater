@@ -12,6 +12,12 @@ public sealed class ReminderService(
     IAlarmScheduler alarms,
     IReminderNotifier notifier)
 {
+    /// <summary>
+    /// A reminder was added, changed or completed, e.g. from a notification while the list is on screen.
+    /// Raised on the thread that made the change.
+    /// </summary>
+    public event Action? Changed;
+
     public Task<IReadOnlyList<Reminder>> GetPendingAsync(CancellationToken cancellationToken = default) =>
         store.GetPendingAsync(cancellationToken);
 
@@ -19,6 +25,7 @@ public sealed class ReminderService(
     {
         await store.AddAsync(reminder, cancellationToken);
         alarms.Schedule(reminder.Id, reminder.NextReminderAt);
+        Changed?.Invoke();
     }
 
     /// <summary>The alarm of a reminder fired: alert it and queue the next repeat.</summary>
@@ -50,6 +57,7 @@ public sealed class ReminderService(
         scheduler.Edit(reminder, text, requestedAt);
         await store.UpdateAsync(reminder, cancellationToken);
         alarms.Schedule(reminder.Id, reminder.NextReminderAt);
+        Changed?.Invoke();
         return true;
     }
 
@@ -61,6 +69,7 @@ public sealed class ReminderService(
 
         scheduler.Complete(reminder);
         await store.UpdateAsync(reminder, cancellationToken);
+        Changed?.Invoke();
     }
 
     /// <summary>
@@ -78,5 +87,6 @@ public sealed class ReminderService(
         scheduler.ScheduleNextRepeat(reminder);
         await store.UpdateAsync(reminder, cancellationToken);
         alarms.Schedule(reminder.Id, reminder.NextReminderAt);
+        Changed?.Invoke();
     }
 }

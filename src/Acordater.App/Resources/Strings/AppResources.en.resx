@@ -33,6 +33,7 @@
   <data name="Ok" xml:space="preserve"><value>OK</value></data>
   <data name="Speak" xml:space="preserve"><value>🎤 Speak</value></data>
   <data name="Listening" xml:space="preserve"><value>Listening… (tap when done)</value></data>
+  <data name="ListeningPrompt" xml:space="preserve"><value>I'm listening.</value></data>
   <data name="NewReminderTitle" xml:space="preserve"><value>New reminder</value></data>
   <data name="EditReminderTitle" xml:space="preserve"><value>Edit reminder</value></data>
   <data name="ReminderTextLabel" xml:space="preserve"><value>What</value></data>

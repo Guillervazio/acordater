@@ -29,7 +29,8 @@ public sealed class WakeWordService : Service
 	const string ActionStop = "com.acordater.app.action.STOP_WAKE_WORD";
 	const string LogTag = "Acordater";
 
-	// After a detection the microphone stays free for the capture, even if the user never opens it.
+	// After a detection the microphone stays free for the capture, even if the user never opens it; it comes back
+	// sooner when the capture ends.
 	static readonly TimeSpan DetectionPause = TimeSpan.FromSeconds(30);
 	// Loading the models takes well under a second; this only guards against a hang.
 	static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(15);
@@ -43,6 +44,7 @@ public sealed class WakeWordService : Service
 	OpenWakeWordDetector? detector;
 	Capture? capture;
 	IDisposable? detectionPause;
+	Java.Lang.Runnable? detectionPauseEnd;
 	bool destroyed;
 
 	public static bool IsRunning
@@ -107,6 +109,12 @@ public sealed class WakeWordService : Service
 
 	public override IBinder? OnBind(Intent? intent) => null;
 
+	public override void OnCreate()
+	{
+		base.OnCreate();
+		CaptureRequests.Ended += OnCaptureEnded;
+	}
+
 	public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
 	{
 		if (intent?.Action == ActionStop)
@@ -142,6 +150,7 @@ public sealed class WakeWordService : Service
 	public override void OnDestroy()
 	{
 		destroyed = true;
+		CaptureRequests.Ended -= OnCaptureEnded;
 		lock (gate)
 		{
 			if (instance == this) instance = null;
@@ -232,14 +241,38 @@ public sealed class WakeWordService : Service
 	{
 		if (destroyed || detectionPause is not null) return; // already handling a detection
 
-		global::Android.Util.Log.Info(LogTag, "Wake word detected");
+		var notifications = Notifications(this);
+		var power = (PowerManager)GetSystemService(PowerService)!;
+		var keyguard = (KeyguardManager)GetSystemService(KeyguardService)!;
+		global::Android.Util.Log.Info(LogTag, $"Wake word detected (app resumed {MainActivity.IsResumed}, " +
+			$"interactive {power.IsInteractive}, locked {keyguard.IsKeyguardLocked}, full screen allowed {notifications.CanUseFullScreenIntent()})");
 		detectionPause = Pause();
-		handler.PostDelayed(ReleaseDetectionPause, (long)DetectionPause.TotalMilliseconds);
+		detectionPauseEnd ??= new Java.Lang.Runnable(ReleaseDetectionPause);
+		handler.PostDelayed(detectionPauseEnd, (long)DetectionPause.TotalMilliseconds);
+		if (!MainActivity.IsResumed) Beep(); // heard: look at the phone (on screen, the capture itself says so)
 		CaptureIntents.OnWakeWord(this);
 	}
 
+	void Beep()
+	{
+		try
+		{
+			var tone = new ToneGenerator(global::Android.Media.Stream.Notification, 80);
+			tone.StartTone(Tone.PropAck, 200);
+			handler.PostDelayed(tone.Release, 500);
+		}
+		catch (Java.Lang.RuntimeException ex)
+		{
+			global::Android.Util.Log.Warn(LogTag, $"Wake word beep failed: {ex.Message}");
+		}
+	}
+
+	// The capture after a detection is over (saved, cancelled or nothing heard): listen again right away.
+	void OnCaptureEnded() => handler.Post(ReleaseDetectionPause);
+
 	void ReleaseDetectionPause()
 	{
+		if (detectionPauseEnd is not null) handler.RemoveCallbacks(detectionPauseEnd);
 		detectionPause?.Dispose();
 		detectionPause = null;
 	}
@@ -324,6 +357,43 @@ public sealed class WakeWordService : Service
 		}
 	}
 
+	/// <summary>DIAGNOSTICS (temporary): what the microphone delivers and what the detector does, logged every 10 s.</summary>
+	sealed class CaptureStats(OpenWakeWordDetector detector)
+	{
+		static readonly TimeSpan Interval = TimeSpan.FromSeconds(10);
+		long windowStart = System.Diagnostics.Stopwatch.GetTimestamp();
+		long inferredAtStart = detector.InferredChunks;
+		int chunks;
+		double maxRms;
+		float maxScore;
+		TimeSpan maxProcessing;
+
+		public void Add(ReadOnlySpan<short> samples, TimeSpan processing)
+		{
+			chunks++;
+			double sum = 0;
+			foreach (var sample in samples) sum += sample * (double)sample;
+			maxRms = Math.Max(maxRms, samples.Length == 0 ? 0 : Math.Sqrt(sum / samples.Length));
+			maxScore = Math.Max(maxScore, detector.LastScore);
+			if (processing > maxProcessing) maxProcessing = processing;
+
+			var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(windowStart);
+			if (elapsed < Interval) return;
+
+			var power = (PowerManager)global::Android.App.Application.Context.GetSystemService(PowerService)!;
+			global::Android.Util.Log.Info(LogTag,
+				$"WakeWord stats: {chunks} chunks in {elapsed.TotalSeconds:0.0} s (expected {elapsed.TotalMilliseconds / 80:0}), " +
+				$"inferred {detector.InferredChunks - inferredAtStart}, max rms {maxRms:0}, max score {maxScore:0.00}, " +
+				$"max processing {maxProcessing.TotalMilliseconds:0} ms, interactive {power.IsInteractive}");
+			windowStart = System.Diagnostics.Stopwatch.GetTimestamp();
+			inferredAtStart = detector.InferredChunks;
+			chunks = 0;
+			maxRms = 0;
+			maxScore = 0;
+			maxProcessing = TimeSpan.Zero;
+		}
+	}
+
 	/// <summary>Reads the microphone on its own thread and feeds the detector, 80 ms at a time.</summary>
 	sealed class Capture
 	{
@@ -345,6 +415,7 @@ public sealed class WakeWordService : Service
 		void Run()
 		{
 			var buffer = new short[OpenWakeWordDetector.ChunkSamples];
+			var stats = new CaptureStats(detector);
 			while (!stopping)
 			{
 				var read = record.Read(buffer, 0, buffer.Length);
@@ -355,7 +426,10 @@ public sealed class WakeWordService : Service
 					return;
 				}
 
-				if (detector.Process(buffer.AsSpan(0, read)))
+				var started = System.Diagnostics.Stopwatch.GetTimestamp();
+				var detected = detector.Process(buffer.AsSpan(0, read));
+				stats.Add(buffer.AsSpan(0, read), System.Diagnostics.Stopwatch.GetElapsedTime(started));
+				if (detected)
 				{
 					detector.Reset(); // one detection per utterance
 					service.handler.Post(service.OnDetected);

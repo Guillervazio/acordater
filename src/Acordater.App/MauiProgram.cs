@@ -46,7 +46,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<ISpeechRecognizer, AndroidSpeechRecognizer>();
 		builder.Services.AddSingleton<WakeWordSettings>();
 		builder.Services.AddSingleton<IWakeWordDetector, AndroidWakeWordDetector>();
-		builder.Services.AddSingleton(TextToSpeech.Default);
 		builder.Services.AddSingleton<VoiceFeedback>();
 		builder.Services.AddSingleton<ReminderTimeFormatter>();
 		builder.Services.AddTransient<MainViewModel>();
