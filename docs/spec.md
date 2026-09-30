@@ -67,10 +67,17 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 ### 4.5 Captura por voz
 
 1. El usuario activa la captura: botón en la app, widget, acceso rápido (4.6) o palabra clave (4.7).
-2. Voz → texto con el reconocimiento de voz **en el dispositivo** (sin conexión), en el idioma del teléfono. Tocar de nuevo el botón termina de escuchar. Si falta el paquete de ese idioma, se pide su descarga y mientras tanto se usa el servicio de reconocimiento por defecto de Android.
+2. Voz → texto con el reconocimiento de voz **en el dispositivo** (sin conexión), en el idioma elegido en Ajustes (ver "Idioma" más abajo). Tocar de nuevo el botón termina de escuchar. Si falta el paquete de ese idioma, se pide su descarga y mientras tanto se usa el servicio de reconocimiento por defecto de Android.
 3. El intérprete extrae **qué** recordar y **cuándo** (si se dijo): las reglas sin conexión o, si se configuró, un proveedor de IA (sección 5). Mientras espera, el botón muestra "Interpretando…".
 4. La app confirma lo que entendió en pantalla y en voz ("Te recuerdo *limpiar la caja del gato* hoy a las 16:30") y permite corregirlo antes de guardar. Tras leerlo, **se guarda solo a los 5 s** si el usuario no toca nada; tocar cualquier campo cancela la cuenta atrás.
 5. Si no se reconoce ningún tiempo, todo el texto es la tarea y se aplica la regla por defecto (+1 h).
+
+**Idioma** (Ajustes). Controla el idioma de la app, del dictado, de la voz de confirmación, de la lectura de la alarma y el contexto que recibe la IA. Opciones:
+- **Idioma del teléfono** (por defecto).
+- **Español** (es-ES) o **English** (en-US), aunque el teléfono esté en otro idioma.
+- **Español e inglés (automático)**: la app queda en el idioma del teléfono y el dictado detecta y cambia de idioma mientras escucha (Android 14+). Hacen falta los dos paquetes de voz descargados; si ese modo falla, vuelve a escuchar solo en el idioma principal.
+
+El dictado, la voz y la IA usan el idioma nuevo enseguida; los textos de la app cambian la próxima vez que se abre. La IA nunca traduce la tarea: la deja en el idioma en que se dijo.
 
 La creación y edición por texto también debe existir (sirve para corregir y como alternativa a la voz). Por texto, la confirmación se muestra solo en pantalla y se guarda con el botón.
 

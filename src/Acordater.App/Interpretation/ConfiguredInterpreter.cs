@@ -10,7 +10,7 @@ namespace Acordater.App.Interpretation;
 public sealed class ConfiguredInterpreter(AiSettings settings, TimeProvider time) : IReminderInterpreter
 {
 	readonly RuleBasedInterpreter rules = new(time);
-	(AiProvider Provider, string Model, string ApiKey, ChatInterpreter Interpreter)? cached;
+	(AiProvider Provider, string Model, string ApiKey, string Culture, ChatInterpreter Interpreter)? cached;
 
 	public async Task<InterpretedReminder> InterpretAsync(string utterance, CancellationToken cancellationToken = default)
 	{
@@ -27,8 +27,9 @@ public sealed class ConfiguredInterpreter(AiSettings settings, TimeProvider time
 		}
 
 		var model = settings.GetModel(provider);
-		if (cached is not { } c || c.Provider != provider || c.Model != model || c.ApiKey != apiKey)
-			cached = c = (provider, model, apiKey, AiProviders.CreateInterpreter(provider, apiKey, model, time)!);
+		var culture = System.Globalization.CultureInfo.CurrentUICulture.Name; // sent as context; changes with Settings
+		if (cached is not { } c || c.Provider != provider || c.Model != model || c.ApiKey != apiKey || c.Culture != culture)
+			cached = c = (provider, model, apiKey, culture, AiProviders.CreateInterpreter(provider, apiKey, model, time)!);
 
 		var result = await c.Interpreter.InterpretAsync(utterance, cancellationToken);
 		if (result.Failure is { } failure)

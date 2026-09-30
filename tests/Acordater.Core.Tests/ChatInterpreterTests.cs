@@ -150,10 +150,11 @@ public class ChatInterpreterTests
         var messages = chat.LastMessages!;
         Assert.Equal(ChatRole.System, messages[0].Role);
         Assert.Contains("24-hour clock", messages[0].Text);
+        Assert.Contains("Never translate", messages[0].Text);
         var context = messages[1].Text;
         Assert.Contains("2026-09-29T10:00 (Tuesday)", context);
         Assert.Contains("time zone Test+2 (UTC+02:00)", context);
-        Assert.Contains("language es-ES", context);
+        Assert.Contains("app language es-ES", context);
         Assert.Contains(Utterance, context);
     }
 

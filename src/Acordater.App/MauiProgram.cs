@@ -23,6 +23,11 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
+		// Before anything reads a localized string.
+		var language = new LanguageSettings(Preferences.Default);
+		language.Apply();
+		builder.Services.AddSingleton(language);
+
 		var databasePath = Path.Combine(FileSystem.AppDataDirectory, "acordater.db");
 		builder.Services.AddDbContextFactory<AcordaterDbContext>(options => options.UseSqlite($"Data Source={databasePath}"));
 

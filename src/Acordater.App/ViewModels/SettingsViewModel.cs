@@ -12,6 +12,7 @@ namespace Acordater.App.ViewModels;
 public sealed partial class SettingsViewModel : ObservableObject
 {
 	readonly QuietHoursSettings settings;
+	readonly LanguageSettings language;
 	readonly AiSettings ai;
 	readonly WakeWordSettings wakeWordSettings;
 	readonly IWakeWordDetector wakeWord;
@@ -27,6 +28,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
 	public SettingsViewModel(
 		QuietHoursSettings settings,
+		LanguageSettings language,
 		AiSettings ai,
 		WakeWordSettings wakeWordSettings,
 		IWakeWordDetector wakeWord,
@@ -35,6 +37,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 		TimeProvider time)
 	{
 		this.settings = settings;
+		this.language = language;
 		this.ai = ai;
 		this.wakeWordSettings = wakeWordSettings;
 		this.wakeWord = wakeWord;
@@ -46,6 +49,14 @@ public sealed partial class SettingsViewModel : ObservableObject
 		QuietStart = quietHours.Start.ToTimeSpan();
 		QuietEnd = quietHours.End.ToTimeSpan();
 		IsFirstRun = !settings.IsConfigured;
+		LanguageNames = LanguageSettings.All.Select(l => l switch
+		{
+			AppLanguage.Spanish => AppResources.LanguageSpanish,
+			AppLanguage.English => AppResources.LanguageEnglish,
+			AppLanguage.Bilingual => AppResources.LanguageBilingual,
+			_ => AppResources.LanguagePhone,
+		}).ToList();
+		SelectedLanguageIndex = LanguageSettings.All.ToList().IndexOf(language.Language);
 		ProviderNames = AiProviders.All.Select(p => p == AiProvider.None ? AppResources.AiProviderNone : AiProviders.DisplayName(p)).ToList();
 	}
 
@@ -56,6 +67,13 @@ public sealed partial class SettingsViewModel : ObservableObject
 	public partial TimeSpan? QuietEnd { get; set; }
 
 	public bool IsFirstRun { get; }
+
+	// Language (docs/spec.md, section 4.5).
+
+	public IReadOnlyList<string> LanguageNames { get; }
+
+	[ObservableProperty]
+	public partial int SelectedLanguageIndex { get; set; }
 
 	// AI interpretation (docs/spec.md, section 5).
 
@@ -275,6 +293,14 @@ public sealed partial class SettingsViewModel : ObservableObject
 	{
 		settings.Save(new QuietHours(TimeOnly.FromTimeSpan(QuietStart ?? default), TimeOnly.FromTimeSpan(QuietEnd ?? default)));
 
+		var chosenLanguage = LanguageSettings.All[Math.Max(0, SelectedLanguageIndex)];
+		var languageChanged = chosenLanguage != language.Language;
+		if (languageChanged)
+		{
+			language.Language = chosenLanguage;
+			language.Apply();
+		}
+
 		if (loaded)
 		{
 			if (SelectedProvider != AiProvider.None)
@@ -288,6 +314,10 @@ public sealed partial class SettingsViewModel : ObservableObject
 				ai.SetModel(provider, model);
 			ai.Provider = SelectedProvider;
 		}
+
+		// Pages already built keep their texts; dictation, speech and the AI use the new language right away.
+		if (languageChanged)
+			await Shell.Current.DisplayAlertAsync(AppResources.LanguageTitle, AppResources.LanguageRestart, AppResources.Ok);
 
 		await Shell.Current.GoToAsync("..");
 	}

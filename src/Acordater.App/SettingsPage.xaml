@@ -27,6 +27,13 @@
 
             <Label Text="{x:Static strings:AppResources.QuietDisabledHint}" FontSize="13" TextColor="{StaticResource Gray500}" />
 
+            <!-- Language (docs/spec.md, section 4.5) -->
+            <Label Text="{x:Static strings:AppResources.LanguageTitle}" FontSize="20" FontAttributes="Bold" Margin="0,16,0,0" />
+            <Label Text="{x:Static strings:AppResources.LanguageDescription}" />
+            <Picker Title="{x:Static strings:AppResources.LanguageTitle}"
+                    ItemsSource="{Binding LanguageNames}"
+                    SelectedIndex="{Binding SelectedLanguageIndex}" />
+
             <!-- AI interpretation (docs/spec.md, section 5) -->
             <Label Text="{x:Static strings:AppResources.AiTitle}" FontSize="20" FontAttributes="Bold" Margin="0,16,0,0" />
             <Label Text="{x:Static strings:AppResources.AiDescription}" />

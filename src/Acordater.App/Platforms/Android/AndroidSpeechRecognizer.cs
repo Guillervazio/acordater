@@ -10,9 +10,11 @@ namespace Acordater.App;
 /// <summary>
 /// Speech to text with Android's SpeechRecognizer, on the device when its language model is installed.
 /// When it is missing, its download is requested and that attempt falls back to the default recognition service.
+/// The language comes from <see cref="LanguageSettings"/>; in bilingual mode the recognizer switches between Spanish
+/// and English as it hears them (Android 14+), and if that fails it listens again in the main language only.
 /// Cancelling stops listening and returns what was heard so far.
 /// </summary>
-public sealed class AndroidSpeechRecognizer : ISpeechRecognizer
+public sealed class AndroidSpeechRecognizer(LanguageSettings language) : ISpeechRecognizer
 {
 	const string LogTag = "Acordater";
 
@@ -22,17 +24,26 @@ public sealed class AndroidSpeechRecognizer : ISpeechRecognizer
 	public Task<string?> ListenAsync(Action<string>? partial, CancellationToken cancellationToken) =>
 		MainThread.InvokeOnMainThreadAsync(() => ListenOnMainThreadAsync(partial, cancellationToken));
 
-	static async Task<string?> ListenOnMainThreadAsync(Action<string>? partial, CancellationToken cancellationToken)
+	async Task<string?> ListenOnMainThreadAsync(Action<string>? partial, CancellationToken cancellationToken)
 	{
 		if (await Permissions.RequestAsync<Permissions.Microphone>() != PermissionStatus.Granted)
 			throw new SpeechUnavailableException(AppResources.MicrophoneDenied);
 
 		var context = Platform.CurrentActivity ?? global::Android.App.Application.Context;
-		var intent = RecognizeIntent();
+		var switchLanguages = language.DictationSwitchLanguages;
+		var intent = RecognizeIntent(language.DictationLanguage, switchLanguages);
 
 		Outcome? outcome = null;
 		if (SpeechRecognizer.IsOnDeviceRecognitionAvailable(context))
+		{
 			outcome = await ListenOnceAsync(context, onDevice: true, intent, partial, cancellationToken);
+			if (switchLanguages is not null && IsFailure(outcome.Error) && !cancellationToken.IsCancellationRequested)
+			{
+				// Language switching needs both language models on the device; listen again in one language.
+				intent = RecognizeIntent(language.DictationLanguage, switchLanguages: null);
+				outcome = await ListenOnceAsync(context, onDevice: true, intent, partial, cancellationToken);
+			}
+		}
 
 		if (outcome is null || IsLanguageMissing(outcome.Error))
 		{
@@ -82,15 +93,27 @@ public sealed class AndroidSpeechRecognizer : ISpeechRecognizer
 		}
 	}
 
-	static Intent RecognizeIntent()
+	static Intent RecognizeIntent(string language, IReadOnlyList<string>? switchLanguages)
 	{
 		var intent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
 		intent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
-		intent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default.ToLanguageTag());
+		intent.PutExtra(RecognizerIntent.ExtraLanguage, language);
 		intent.PutExtra(RecognizerIntent.ExtraPartialResults, true);
 		intent.PutExtra(RecognizerIntent.ExtraPreferOffline, true);
+		if (switchLanguages is not null)
+		{
+			var allowed = new List<string>(switchLanguages);
+			intent.PutExtra(RecognizerIntent.ExtraEnableLanguageDetection, true);
+			intent.PutStringArrayListExtra(RecognizerIntent.ExtraLanguageDetectionAllowedLanguages, allowed);
+			intent.PutExtra(RecognizerIntent.ExtraEnableLanguageSwitch, RecognizerIntent.LanguageSwitchBalanced);
+			intent.PutStringArrayListExtra(RecognizerIntent.ExtraLanguageSwitchAllowedLanguages, allowed);
+		}
 		return intent;
 	}
+
+	// Errors worth a second attempt (not "heard nothing" or "stopped").
+	static bool IsFailure(SpeechRecognizerError? error) =>
+		error is not null and not (SpeechRecognizerError.NoMatch or SpeechRecognizerError.SpeechTimeout or SpeechRecognizerError.Client);
 
 	static bool IsLanguageMissing(SpeechRecognizerError? error) =>
 		error is SpeechRecognizerError.LanguageNotSupported or SpeechRecognizerError.LanguageUnavailable;

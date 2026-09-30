@@ -30,7 +30,8 @@ public sealed class ChatInterpreter : IReminderInterpreter
         Reply with only a JSON object, without markdown or any other text, with exactly these keys:
         {"text": string, "when": string or null}
 
-        "text": what to remember, in the user's language and with the user's words. Remove the trigger words
+        "text": what to remember, with the user's words and in the language of the sentence. Never translate it: a
+        Spanish sentence gives Spanish text even when the app language is English. Remove the trigger words
         ("recordame", "recuérdame", "acordame", "remind me", "hey Cordie", "por favor", "please"), the time expression
         and leading connectors ("que", "que tengo que", "de", "to"). It is never empty.
 
@@ -112,7 +113,7 @@ public sealed class ChatInterpreter : IReminderInterpreter
         var sign = offset < TimeSpan.Zero ? "-" : "+";
         return string.Create(CultureInfo.InvariantCulture,
             $"""
-            Now: {now:yyyy-MM-dd'T'HH:mm} ({now.DayOfWeek}), time zone {zone.Id} (UTC{sign}{offset:hh\:mm}), language {culture.Name}.
+            Now: {now:yyyy-MM-dd'T'HH:mm} ({now.DayOfWeek}), time zone {zone.Id} (UTC{sign}{offset:hh\:mm}), app language {culture.Name}.
             Sentence: {utterance.Trim()}
             """);
     }

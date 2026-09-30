@@ -6,7 +6,7 @@ namespace Acordater.App.Voice;
 public sealed class VoiceFeedback(ITextToSpeech textToSpeech)
 {
 	Locale? locale;
-	bool localeResolved;
+	string? localeResolvedFor; // the culture changes when the language is changed in Settings
 
 	public async Task SpeakAsync(string text, CancellationToken cancellationToken)
 	{
@@ -23,16 +23,16 @@ public sealed class VoiceFeedback(ITextToSpeech textToSpeech)
 
 	async Task<Locale?> LocaleAsync()
 	{
-		if (localeResolved) return locale;
-
 		var culture = CultureInfo.CurrentUICulture;
+		if (localeResolvedFor == culture.Name) return locale;
+
 		var sameLanguage = (await textToSpeech.GetLocalesAsync())
 			.Where(l => string.Equals(l.Language, culture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
 			.ToList();
 		var region = culture.IsNeutralCulture ? null : new RegionInfo(culture.Name).TwoLetterISORegionName;
 		locale = sameLanguage.FirstOrDefault(l => string.Equals(l.Country, region, StringComparison.OrdinalIgnoreCase))
 			?? sameLanguage.FirstOrDefault();
-		localeResolved = true;
+		localeResolvedFor = culture.Name;
 		return locale;
 	}
 }
