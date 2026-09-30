@@ -91,13 +91,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 	public partial bool WakeWordEnabled { get; set; }
 
 	[ObservableProperty]
-	public partial string AccessKey { get; set; } = "";
-
-	[ObservableProperty]
 	public partial string WakeWordModel { get; set; } = "";
-
-	[ObservableProperty]
-	public partial string WakeWordParameters { get; set; } = "";
 
 	[ObservableProperty]
 	public partial bool HasCustomWakeWord { get; set; }
@@ -115,7 +109,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 			apiKeys[provider] = await ai.GetApiKeyAsync(provider);
 			models[provider] = ai.GetModel(provider);
 		}
-		AccessKey = await wakeWordSettings.GetAccessKeyAsync();
 		loaded = true;
 
 		SelectedProviderIndex = Math.Max(0, AiProviders.All.ToList().IndexOf(ai.Provider));
@@ -195,14 +188,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 			return;
 		}
 
-		if (string.IsNullOrWhiteSpace(AccessKey))
-		{
-			SetWakeWordSwitch(false);
-			WakeWordStatus = AppResources.WakeWordNeedsKey;
-			return;
-		}
-
-		await wakeWordSettings.SetAccessKeyAsync(AccessKey);
 		WakeWordStatus = AppResources.WakeWordStarting;
 		try
 		{
@@ -220,11 +205,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
 	[RelayCommand]
 	Task ImportWakeWordModelAsync() =>
-		ImportAsync(".ppn", AppResources.WakeWordImportModel, wakeWordSettings.ImportKeywordAsync);
-
-	[RelayCommand]
-	Task ImportWakeWordParametersAsync() =>
-		ImportAsync(".pv", AppResources.WakeWordImportParameters, wakeWordSettings.ImportParametersAsync);
+		ImportAsync(".onnx", AppResources.WakeWordImportModel, wakeWordSettings.ImportKeywordAsync);
 
 	[RelayCommand]
 	async Task RemoveWakeWordModelAsync()
@@ -236,7 +217,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
 	async Task ImportAsync(string extension, string title, Func<Stream, string, Task> import)
 	{
-		// .ppn and .pv have no MIME type, so any file can be picked and the extension is checked here.
+		// .onnx has no standard MIME type, so any file can be picked and the extension is checked here.
 		var file = await FilePicker.Default.PickAsync(new PickOptions { PickerTitle = title });
 		if (file is null) return;
 
@@ -280,13 +261,10 @@ public sealed partial class SettingsViewModel : ObservableObject
 	void UpdateWakeWordInfo()
 	{
 		var phrase = wakeWordSettings.Phrase;
-		HasCustomWakeWord = wakeWordSettings.HasCustomKeyword || wakeWordSettings.HasCustomParameters;
+		HasCustomWakeWord = wakeWordSettings.HasCustomKeyword;
 		WakeWordModel = wakeWordSettings.HasCustomKeyword
 			? string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordModelCustom, phrase)
 			: string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordModelBuiltIn, phrase);
-		WakeWordParameters = wakeWordSettings.ParametersName is { } parameters
-			? string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordParametersCustom, parameters)
-			: AppResources.WakeWordParametersBuiltIn;
 		WakeWordStatus = wakeWord.IsRunning
 			? string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordActive, phrase)
 			: wakeWordSettings.Enabled && wakeWord.LastError is { } error ? error : AppResources.WakeWordInactive;
@@ -309,7 +287,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 			foreach (var (provider, model) in models)
 				ai.SetModel(provider, model);
 			ai.Provider = SelectedProvider;
-			await wakeWordSettings.SetAccessKeyAsync(AccessKey);
 		}
 
 		await Shell.Current.GoToAsync("..");

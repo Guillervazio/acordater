@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Binding metadata for the Picovoice Maven libraries (see AndroidMavenLibrary in the csproj). -->
-<metadata>
-	<!-- The Java class ai.picovoice.porcupine.Porcupine and ai.picovoice.android.voiceprocessor.VoiceProcessor would clash
-	     with a namespace of the same name (BG8403). -->
-	<attr path="/api/package[@name='ai.picovoice.porcupine']" name="managedName">Picovoice.WakeWord</attr>
-	<attr path="/api/package[@name='ai.picovoice.android.voiceprocessor']" name="managedName">Picovoice.Audio</attr>
-</metadata>

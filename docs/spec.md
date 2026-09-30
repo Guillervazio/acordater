@@ -82,10 +82,13 @@ La creación y edición por texto también debe existir (sirve para corregir y c
 
 Decir la palabra clave abre la captura por voz (4.5), igual que el widget, **también con el teléfono bloqueado y la pantalla apagada**.
 
-- **Motor:** Picovoice Porcupine (`ai.picovoice:porcupine-android` 4.0.2), en el dispositivo. Necesita una **AccessKey** de Picovoice, que se valida por internet al activarlo. La AccessKey se ingresa en Ajustes y se guarda en `SecureStorage`.
-- **Modelo:** el modelo propio "Hey Cordie" (`.ppn`, entrenado en Picovoice Console para Android) se importa desde Ajustes con un selector de archivos, sin recompilar. Si el modelo es en español, también hay que importar el archivo de parámetros del idioma (`porcupine_params_es.pv`). Mientras no haya un modelo propio, se usa la palabra incluida **"Jarvis"** (modelo en inglés), para probar el circuito completo solo con la AccessKey. "Volver a la palabra incluida" borra el modelo importado.
+- **Motor:** [openWakeWord](https://github.com/dscripka/openWakeWord), de código abierto y **sin cuenta ni conexión**. Son tres modelos ONNX (melspectrograma → embedding compartido → modelo de la palabra) que la app ejecuta con ONNX Runtime. El pipeline de streaming está portado a C# en Core (`OpenWakeWordDetector`) y verificado en tests con audio sintetizado: "hey Jarvis" da ~1,0 y otras frases ~0,0 (umbral 0,5).
+- **Modelo:** el modelo propio "Hey Cordie" (`.onnx`) se entrena con el notebook de entrenamiento automático de openWakeWord (Google Colab, gratis, voz sintética en inglés) y se importa desde Ajustes con un selector de archivos, sin recompilar. Mientras no haya un modelo propio, se usa **"Hey Jarvis"**, incluido en la app, para probar el circuito completo. "Volver a la palabra incluida" borra el modelo importado.
+- **Por qué no Porcupine:** estaba elegido, pero Picovoice cerró su plan gratuito el 30/06/2026 y ya no tiene planes para uso personal (solo una prueba única para empresas). Se llegó a integrar (commit de la fase 5) y se reemplazó por openWakeWord.
+- **Licencias:** el código de openWakeWord es Apache 2.0. Sus modelos preentrenados (incluido "hey Jarvis") son CC BY-NC-SA 4.0, **no comercial**, lo que vale para este uso personal. El modelo de embedding es de Google (Apache 2.0). Un modelo "Hey Cordie" entrenado por nosotros hereda las condiciones de los datos de entrenamiento del notebook.
+- **Silencio:** para ahorrar batería, tras ~1,4 s por debajo de un nivel de sonido (RMS 150 en 16 bits; una habitación tranquila midió ~70 en el Pixel) el detector deja de ejecutar los modelos y repite el último estado. Cuando vuelve el sonido, procesa los últimos 240 ms guardados para no perder el comienzo de la frase. Medido en el Pixel 8 Pro: sin la puerta, ~40 % de un núcleo (el modelo de embedding tarda ~17 ms por bloque de 80 ms); con la puerta, en una habitación tranquila, ~5 %. Con ruido constante (tele, conversación) el consumo sube hacia el máximo.
 - **Activación:** interruptor en Ajustes, **apagado por defecto**. Al activarlo se piden los permisos de micrófono y de notificaciones.
-- Corre en un **servicio en primer plano de tipo micrófono** con una **notificación permanente** ("Escuchando «Jarvis»"), que tiene el botón **Desactivar** (apaga también el interruptor).
+- Corre en un **servicio en primer plano de tipo micrófono** con una **notificación permanente** ("Escuchando «Hey Jarvis»"), que tiene el botón **Desactivar** (apaga también el interruptor).
 - **Al detectar la palabra:**
   - con la app en pantalla, empieza a escuchar directamente;
   - si no, Android (10+) no deja abrir una actividad desde segundo plano. Igual que la alarma, se publica una notificación de **pantalla completa**: con el teléfono bloqueado o la pantalla apagada, enciende la pantalla y abre la captura **sobre la pantalla de bloqueo** (`showWhenLocked` solo para esa captura). Al guardar o cancelar, la app vuelve detrás del bloqueo. Con el teléfono desbloqueado y en uso, Android la muestra como aviso emergente ("¿Qué te recuerdo? Toca para dictar"), que hay que tocar;
@@ -93,8 +96,7 @@ Decir la palabra clave abre la captura por voz (4.5), igual que el widget, **tam
 - **Pausas:** el detector suelta el micrófono mientras la app escucha (el reconocimiento de voz lo necesita), durante 30 s después de cada detección (para que la captura lo tenga libre) y mientras suena una alarma. Después se reanuda solo.
 - **Reinicio y actualización:** Android 14+ no permite arrancar un servicio en primer plano de micrófono desde segundo plano ni desde `BOOT_COMPLETED`. Tras reiniciar el teléfono o actualizar la app, si la palabra clave estaba activa, se muestra una notificación "La palabra clave está en pausa"; tocarla abre la app, que la reactiva. También se reactiva sola **cada vez que se abre la app**. Si el sistema detiene el servicio y no lo puede recrear, se muestra la misma notificación.
 - **Optimización de batería:** no se pide la exención. Un servicio en primer plano ya sigue funcionando en Doze con la batería en "Optimizada" (la opción por defecto). Solo si en las pruebas el Pixel lo detiene, se configura a mano "Sin restricciones" en la información de la app.
-- **Privacidad:** el audio se procesa en el teléfono. A Picovoice solo llega la validación de la AccessKey.
-- **Licencia de Porcupine (riesgo abierto, 30/09/2026):** Picovoice cerró su plan gratuito el 30/06/2026 (las AccessKeys gratuitas dejaron de funcionar) y su FAQ indica que no tiene planes para uso personal o no comercial: solo ofrece una prueba gratuita única para empresas, que no se renueva. Sirve para hacer este spike y medir la batería, pero no para uso continuado en una app personal. Si el resultado es "sí", la alternativa prevista es **openWakeWord** (código abierto, sin cuenta), cambiando solo el motor dentro de `WakeWordService`: `IWakeWordDetector`, el servicio, las notificaciones, las pausas y la apertura de la captura se mantienen.
+- **Privacidad:** el audio se procesa en el teléfono y no sale de él.
 
 **Criterio de batería (decisión de la fase 5).** Se mide el consumo **adicional** con el detector activo, con la pantalla apagada y el teléfono en reposo, comparado con el mismo período sin detector:
 
@@ -155,7 +157,7 @@ Notas técnicas de Android:
 - `POST_NOTIFICATIONS`, `USE_FULL_SCREEN_INTENT`, `RECEIVE_BOOT_COMPLETED` (reprogramar tras reiniciar).
 - Canal de notificación con `AudioAttributes.USAGE_ALARM` para sonar en modo silencio.
 - Voz a texto: `SpeechRecognizer` en el dispositivo. Texto a voz: `TextToSpeech`.
-- Palabra clave: Porcupine enlazado desde Maven (`AndroidMavenLibrary`), en un servicio en primer plano de tipo micrófono (`FOREGROUND_SERVICE_MICROPHONE`).
+- Palabra clave: modelos de openWakeWord con ONNX Runtime (`Microsoft.ML.OnnxRuntime`, que suma ~15 MB por ABI al APK), leyendo el micrófono con `AudioRecord` en un servicio en primer plano de tipo micrófono (`FOREGROUND_SERVICE_MICROPHONE`).
 
 ## 7. Fases
 
@@ -166,17 +168,17 @@ Notas técnicas de Android:
 | 2 | App MVP por texto: crear/listar/editar, SQLite, alarmas, notificación con Hecho/Posponer, sonido en silencio, reprogramar tras reiniciar | Recordatorio real que insiste cada hora hasta marcarlo | Hecha |
 | 3 | Voz: captura por voz sin conexión, confirmación, lectura en voz alta del aviso | Crear un recordatorio solo hablando | Hecha |
 | 4 | Accesos rápidos: widget y botón en ajustes rápidos (4.6) | Capturar sin abrir la app | Hecha |
-| 5 | **Spike** de palabra clave ("hey Cordie") con el teléfono bloqueado (4.7): Porcupine + servicio en primer plano; medir batería con el criterio de 4.7 | Decisión: sí/no y cómo | Implementada; falta probar en el Pixel |
+| 5 | **Spike** de palabra clave ("hey Cordie") con el teléfono bloqueado (4.7): openWakeWord + servicio en primer plano; medir batería con el criterio de 4.7 | Decisión: sí/no y cómo | Implementada; falta probar en el Pixel |
 | 6 | Modo IA multiproveedor (Claude, OpenAI, Gemini con API key propia) con respaldo en reglas (sección 5). Gemini Nano descartado por ahora | Frases libres interpretadas correctamente con cada proveedor | Implementada; falta probar en el Pixel |
 | 7 | Versión Windows | La app corre en Windows | |
 | Futuro | Listas (p. ej. compras como un único recordatorio) | — | |
 
 ## 8. Riesgos
 
-- **Palabra clave con el teléfono bloqueado:** Android restringe el micrófono en segundo plano (hace falta un servicio en primer plano con notificación permanente), no deja reactivarlo solo tras reiniciar y el consumo de batería es real. Por eso está aislado en la fase 5, es opcional y el MVP no depende de ello. Porcupine además depende de una cuenta de Picovoice, que ya no tiene plan gratuito ni personal (ver 4.7).
+- **Palabra clave con el teléfono bloqueado:** Android restringe el micrófono en segundo plano (hace falta un servicio en primer plano con notificación permanente), no deja reactivarlo solo tras reiniciar y el consumo de batería es real. Por eso está aislado en la fase 5, es opcional y el MVP no depende de ello. Los modelos de openWakeWord en inglés pueden reconocer peor "hey Cordie" dicho con acento español: se verifica al probar y, si hace falta, se ajusta el umbral o se reentrena.
 - **Modo IA:** depende de servicios externos y de sus nombres de modelo, que cambian (los modelos por defecto se pueden cambiar en Ajustes sin recompilar). El respaldo en reglas hace que nunca bloquee la creación de recordatorios.
 - **Optimización de batería / Doze:** puede retrasar las alarmas si no son exactas; hay que verificarlo en el dispositivo real.
-- **Asperezas de MAUI** en herramientas y en el acceso a algunas APIs nativas (binding de librerías Java como Porcupine).
+- **Asperezas de MAUI** en herramientas y en el acceso a algunas APIs nativas (p. ej. enlazar librerías Java o Kotlin).
 
 ## 9. Preguntas abiertas
 

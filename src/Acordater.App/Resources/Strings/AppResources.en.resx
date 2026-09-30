@@ -65,28 +65,18 @@
   <data name="AiTestOk" xml:space="preserve"><value>It works ({0:0.0} s): “{1}”, {2}.</value></data>
   <data name="AiTestFailed" xml:space="preserve"><value>Failed ({0}): {1}</value></data>
   <data name="WakeWordTitle" xml:space="preserve"><value>Wake word</value></data>
-  <data name="WakeWordDescription" xml:space="preserve"><value>Say the wake word to dictate a reminder, even with the phone locked. It listens with Picovoice Porcupine on the phone, with a permanent notification, and uses battery.</value></data>
-  <data name="WakeWordAccessKey" xml:space="preserve"><value>Picovoice AccessKey</value></data>
-  <data name="WakeWordAccessKeyPlaceholder" xml:space="preserve"><value>Paste your AccessKey</value></data>
+  <data name="WakeWordDescription" xml:space="preserve"><value>Say the wake word to dictate a reminder, even with the phone locked. It listens on the phone with openWakeWord (offline, no account), with a permanent notification, and uses battery.</value></data>
   <data name="WakeWordEnable" xml:space="preserve"><value>Listen for the wake word</value></data>
-  <data name="WakeWordNeedsKey" xml:space="preserve"><value>Enter the Picovoice AccessKey first.</value></data>
   <data name="WakeWordStarting" xml:space="preserve"><value>Turning on…</value></data>
   <data name="WakeWordActive" xml:space="preserve"><value>On: say “{0}”.</value></data>
   <data name="WakeWordInactive" xml:space="preserve"><value>Off.</value></data>
   <data name="WakeWordModelBuiltIn" xml:space="preserve"><value>Word: “{0}” (built in, for testing)</value></data>
   <data name="WakeWordModelCustom" xml:space="preserve"><value>Word: “{0}” (imported model)</value></data>
-  <data name="WakeWordParametersBuiltIn" xml:space="preserve"><value>Model language: English (built in)</value></data>
-  <data name="WakeWordParametersCustom" xml:space="preserve"><value>Model language: {0}</value></data>
-  <data name="WakeWordImportModel" xml:space="preserve"><value>Import model (.ppn)</value></data>
-  <data name="WakeWordImportParameters" xml:space="preserve"><value>Import language (.pv)</value></data>
+  <data name="WakeWordImportModel" xml:space="preserve"><value>Import model (.onnx)</value></data>
   <data name="WakeWordRemoveModel" xml:space="preserve"><value>Back to the built-in word</value></data>
   <data name="WakeWordWrongFile" xml:space="preserve"><value>The file must end in {0}.</value></data>
-  <data name="WakeWordStartFailed" xml:space="preserve"><value>The wake word could not be turned on: {0}</value></data>
-  <data name="WakeWordKeyInvalid" xml:space="preserve"><value>the AccessKey is invalid or there is no connection to validate it</value></data>
-  <data name="WakeWordKeyLimit" xml:space="preserve"><value>the AccessKey reached its usage or device limit</value></data>
-  <data name="WakeWordKeyThrottled" xml:space="preserve"><value>too many attempts; try again later</value></data>
   <data name="WakeWordBackgroundStart" xml:space="preserve"><value>Android only allows turning it on with the app open. Open Acordater to turn it back on.</value></data>
-  <data name="WakeWordStartTimeout" xml:space="preserve"><value>The wake word took too long to turn on. Check the connection and try again.</value></data>
+  <data name="WakeWordStartTimeout" xml:space="preserve"><value>The wake word took too long to turn on. Try again.</value></data>
   <data name="WakeWordStopped" xml:space="preserve"><value>Turned off.</value></data>
   <data name="WakeWordStoppedTitle" xml:space="preserve"><value>The wake word is paused</value></data>
   <data name="WakeWordAfterRestart" xml:space="preserve"><value>After a restart or an update, Android does not let it turn back on by itself. Tap to open Acordater and turn it back on.</value></data>
@@ -97,4 +87,6 @@
   <data name="WakeWordTurnOff" xml:space="preserve"><value>Turn off</value></data>
   <data name="WakeWordDetectedTitle" xml:space="preserve"><value>What should I remind you?</value></data>
   <data name="WakeWordDetectedText" xml:space="preserve"><value>Tap to dictate the reminder.</value></data>
+  <data name="WakeWordInvalidModel" xml:space="preserve"><value>The wake word model could not be loaded. Import an .onnx model trained with openWakeWord or go back to the built-in word.</value></data>
+  <data name="WakeWordMicrophoneUnavailable" xml:space="preserve"><value>The microphone could not be used for the wake word.</value></data>
 </root>

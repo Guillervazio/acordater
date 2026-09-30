@@ -10,6 +10,8 @@
   <ItemGroup>
     <!-- IChatClient: the provider-neutral abstraction behind ChatInterpreter (docs/spec.md, section 5). -->
     <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.1" />
+    <!-- Wake word detection (OpenWakeWordDetector). Managed API only: each app or test project brings the native runtime. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Managed" Version="1.30.0" />
   </ItemGroup>
 
 </Project>

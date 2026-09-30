@@ -1,19 +1,20 @@
-using System.Globalization;
 using Acordater.App.Resources.Strings;
 using Acordater.App.Voice;
+using Acordater.Core.WakeWord;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.Graphics.Drawables;
+using Android.Media;
 using Android.OS;
-using Picovoice.WakeWord;
 
 namespace Acordater.App;
 
 /// <summary>
-/// Listens for the wake word with Porcupine in a microphone foreground service, with a permanent notification
-/// (docs/spec.md, section 4.7). On detection it opens voice capture like the widget does (<see cref="CaptureIntents"/>).
-/// The microphone is released while paused (<see cref="Pause"/>): while the app itself listens and while an alarm rings.
+/// Listens for the wake word with openWakeWord (<see cref="OpenWakeWordDetector"/>) in a microphone foreground service,
+/// with a permanent notification (docs/spec.md, section 4.7). On detection it opens voice capture like the widget does
+/// (<see cref="CaptureIntents"/>). The microphone is released while paused (<see cref="Pause"/>): while the app itself
+/// listens and while an alarm rings.
 /// Android 14+ only lets a microphone foreground service start while the app is in the foreground, so it is started
 /// from the app (Settings or opening the app), never from boot; when that is not possible the user gets a
 /// notification to reactivate it.
@@ -27,12 +28,11 @@ public sealed class WakeWordService : Service
 	const int StoppedNotificationId = 4;
 	const string ActionStop = "com.acordater.app.action.STOP_WAKE_WORD";
 	const string LogTag = "Acordater";
-	const float Sensitivity = 0.6f;
 
 	// After a detection the microphone stays free for the capture, even if the user never opens it.
 	static readonly TimeSpan DetectionPause = TimeSpan.FromSeconds(30);
-	// Building Porcupine validates the AccessKey online.
-	static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(20);
+	// Loading the models takes well under a second; this only guards against a hang.
+	static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(15);
 
 	static readonly Lock gate = new();
 	static WakeWordService? instance;
@@ -40,9 +40,9 @@ public sealed class WakeWordService : Service
 	static TaskCompletionSource<string?>? starting;
 
 	readonly Handler handler = new(Looper.MainLooper!);
-	PorcupineManager? porcupine;
+	OpenWakeWordDetector? detector;
+	Capture? capture;
 	IDisposable? detectionPause;
-	bool listening;
 	bool destroyed;
 
 	public static bool IsRunning
@@ -132,7 +132,7 @@ public sealed class WakeWordService : Service
 
 		lock (gate) instance = this;
 		Notifications(this).Cancel(StoppedNotificationId);
-		if (porcupine is null)
+		if (detector is null)
 			_ = InitializeAsync();
 		else
 			Complete(null);
@@ -148,76 +148,91 @@ public sealed class WakeWordService : Service
 		}
 		handler.RemoveCallbacksAndMessages(null);
 		ReleaseDetectionPause(); // pauses are static: a pending one would keep the next start silent
-		ReleasePorcupine();
+		StopCapture();
+		detector?.Dispose();
+		detector = null;
 		base.OnDestroy();
 	}
 
 	async Task InitializeAsync()
 	{
 		var settings = Services.GetRequiredService<WakeWordSettings>();
-		var accessKey = await settings.GetAccessKeyAsync();
-		if (accessKey.Length == 0)
-		{
-			Fail(AppResources.WakeWordNeedsKey);
-			return;
-		}
-
-		var keyword = settings.HasCustomKeyword ? WakeWordSettings.KeywordFile : null;
-		var parameters = settings.HasCustomParameters ? WakeWordSettings.ParametersFile : null;
 		try
 		{
-			var manager = await Task.Run(() =>
-			{
-				var builder = new PorcupineManager.Builder()
-					.SetAccessKey(accessKey)!
-					.SetSensitivity(Sensitivity)!
-					.SetErrorCallback(new ErrorCallback(this))!;
-				builder = keyword is null ? builder.SetKeyword(Porcupine.BuiltInKeyword.Jarvis)! : builder.SetKeywordPath(keyword)!;
-				if (parameters is not null) builder = builder.SetModelPath(parameters)!;
-				return builder.Build(this, new DetectionCallback(this))!;
-			});
+			var melspectrogram = await ReadPackageFileAsync(WakeWordSettings.MelspectrogramModel);
+			var embedding = await ReadPackageFileAsync(WakeWordSettings.EmbeddingModel);
+			var keyword = settings.HasCustomKeyword
+				? await File.ReadAllBytesAsync(WakeWordSettings.KeywordFile)
+				: await ReadPackageFileAsync(WakeWordSettings.BuiltInKeywordModel);
+			var loaded = await Task.Run(() => new OpenWakeWordDetector(melspectrogram, embedding, keyword));
 
 			if (destroyed)
 			{
-				manager.Delete();
+				loaded.Dispose();
 				return;
 			}
-			porcupine = manager;
+			detector = loaded;
 			LastError = null;
 			UpdateListening();
-			Complete(null);
+			if (!destroyed) Complete(null);
 		}
-		catch (PorcupineException ex)
+		catch (Exception ex) when (ex is Microsoft.ML.OnnxRuntime.OnnxRuntimeException or IOException)
 		{
-			Fail(Describe(ex, accessKey));
+			global::Android.Util.Log.Warn(LogTag, $"Wake word model failed to load: {ex}");
+			Fail(AppResources.WakeWordInvalidModel);
 		}
+	}
+
+	static async Task<byte[]> ReadPackageFileAsync(string name)
+	{
+		await using var stream = await FileSystem.OpenAppPackageFileAsync(name);
+		using var memory = new MemoryStream();
+		await stream.CopyToAsync(memory);
+		return memory.ToArray();
 	}
 
 	/// <summary>Starts or stops the microphone to match the pauses. Main thread only.</summary>
 	void UpdateListening()
 	{
-		if (porcupine is null || destroyed) return;
+		if (detector is null || destroyed) return;
 
 		bool shouldListen;
 		lock (gate) shouldListen = pauses == 0;
-		if (shouldListen == listening) return;
+		if (shouldListen == capture is not null) return;
 
-		try
+		if (shouldListen) StartCapture(detector);
+		else StopCapture();
+	}
+
+	void StartCapture(OpenWakeWordDetector detector)
+	{
+		var minBuffer = AudioRecord.GetMinBufferSize(OpenWakeWordDetector.SampleRate, ChannelIn.Mono, Encoding.Pcm16bit);
+		// Room for ~0.6 s: waking up from silence processes a few chunks at once.
+		var record = new AudioRecord(AudioSource.VoiceRecognition, OpenWakeWordDetector.SampleRate, ChannelIn.Mono, Encoding.Pcm16bit,
+			Math.Max(minBuffer, OpenWakeWordDetector.ChunkSamples * 2 * 8));
+		if (record.State != State.Initialized)
 		{
-			if (shouldListen) porcupine.Start();
-			else porcupine.Stop();
-			listening = shouldListen;
+			record.Release();
+			Fail(AppResources.WakeWordMicrophoneUnavailable);
+			return;
 		}
-		catch (PorcupineException ex)
-		{
-			Fail(string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordStartFailed, ex.Message));
-		}
+
+		detector.Reset();
+		record.StartRecording();
+		capture = new Capture(record, detector, this);
+	}
+
+	void StopCapture()
+	{
+		capture?.Stop();
+		capture = null;
 	}
 
 	void OnDetected()
 	{
+		if (destroyed || detectionPause is not null) return; // already handling a detection
+
 		global::Android.Util.Log.Info(LogTag, "Wake word detected");
-		ReleaseDetectionPause();
 		detectionPause = Pause();
 		handler.PostDelayed(ReleaseDetectionPause, (long)DetectionPause.TotalMilliseconds);
 		CaptureIntents.OnWakeWord(this);
@@ -232,31 +247,16 @@ public sealed class WakeWordService : Service
 	/// <summary>Stops by itself: reports to a pending start, or else notifies the user.</summary>
 	void Fail(string reason)
 	{
-		global::Android.Util.Log.Warn(LogTag, "Wake word stopped");
+		global::Android.Util.Log.Warn(LogTag, $"Wake word stopped: {reason}");
 		LastError = reason;
 		bool hadPendingStart;
 		lock (gate) hadPendingStart = starting is not null;
 		if (!hadPendingStart) NotifyStopped(this, reason);
 		Complete(reason);
 
-		ReleasePorcupine();
+		StopCapture();
 		StopForeground(StopForegroundFlags.Remove);
 		StopSelf();
-	}
-
-	void ReleasePorcupine()
-	{
-		try
-		{
-			if (listening) porcupine?.Stop();
-		}
-		catch (PorcupineException)
-		{
-			// Already failing or stopping; nothing else to release.
-		}
-		porcupine?.Delete();
-		porcupine = null;
-		listening = false;
 	}
 
 	Notification BuildNotification()
@@ -270,8 +270,8 @@ public sealed class WakeWordService : Service
 
 		return new Notification.Builder(this, ChannelId)
 			.SetSmallIcon(icon)!
-			.SetContentTitle(string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordNotificationTitle, phrase))!
-			.SetContentText(string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordNotificationText, phrase))!
+			.SetContentTitle(string.Format(System.Globalization.CultureInfo.CurrentCulture, AppResources.WakeWordNotificationTitle, phrase))!
+			.SetContentText(string.Format(System.Globalization.CultureInfo.CurrentCulture, AppResources.WakeWordNotificationText, phrase))!
 			.SetContentIntent(ReminderIntents.OpenApp(this))!
 			.SetOngoing(true)!
 			.SetForegroundServiceBehavior((int)NotificationForegroundService.Immediate)!
@@ -284,19 +284,6 @@ public sealed class WakeWordService : Service
 		var channel = new NotificationChannel(ChannelId, AppResources.WakeWordChannel, NotificationImportance.Low);
 		channel.SetShowBadge(false);
 		Notifications(this).CreateNotificationChannel(channel);
-	}
-
-	static string Describe(PorcupineException ex, string accessKey)
-	{
-		var reason = ex switch
-		{
-			PorcupineActivationLimitException => AppResources.WakeWordKeyLimit,
-			PorcupineActivationThrottledException => AppResources.WakeWordKeyThrottled,
-			PorcupineActivationRefusedException or PorcupineActivationException => AppResources.WakeWordKeyInvalid,
-			_ => ex.Message ?? ex.GetType().Name,
-		};
-		// Never show or log the AccessKey, even if an error message were to include it.
-		return string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordStartFailed, reason.Replace(accessKey, "***", StringComparison.Ordinal));
 	}
 
 	static void Complete(string? error)
@@ -337,16 +324,53 @@ public sealed class WakeWordService : Service
 		}
 	}
 
-	/// <summary>Called on Porcupine's audio thread.</summary>
-	sealed class DetectionCallback(WakeWordService service) : Java.Lang.Object, IPorcupineManagerCallback
+	/// <summary>Reads the microphone on its own thread and feeds the detector, 80 ms at a time.</summary>
+	sealed class Capture
 	{
-		public void Invoke(int keywordIndex) => service.handler.Post(service.OnDetected);
-	}
+		readonly AudioRecord record;
+		readonly OpenWakeWordDetector detector;
+		readonly WakeWordService service;
+		readonly Thread thread;
+		volatile bool stopping;
 
-	sealed class ErrorCallback(WakeWordService service) : Java.Lang.Object, IPorcupineManagerErrorCallback
-	{
-		public void Invoke(PorcupineException? error) =>
-			service.handler.Post(() => service.Fail(string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordStartFailed, error?.Message)));
+		public Capture(AudioRecord record, OpenWakeWordDetector detector, WakeWordService service)
+		{
+			this.record = record;
+			this.detector = detector;
+			this.service = service;
+			thread = new Thread(Run) { IsBackground = true, Name = "WakeWord" };
+			thread.Start();
+		}
+
+		void Run()
+		{
+			var buffer = new short[OpenWakeWordDetector.ChunkSamples];
+			while (!stopping)
+			{
+				var read = record.Read(buffer, 0, buffer.Length);
+				if (stopping) break;
+				if (read < 0)
+				{
+					service.handler.Post(() => service.Fail(AppResources.WakeWordMicrophoneUnavailable));
+					return;
+				}
+
+				if (detector.Process(buffer.AsSpan(0, read)))
+				{
+					detector.Reset(); // one detection per utterance
+					service.handler.Post(service.OnDetected);
+				}
+			}
+		}
+
+		/// <summary>Releases the microphone; returns once the reading thread no longer uses the detector.</summary>
+		public void Stop()
+		{
+			stopping = true;
+			record.Stop(); // unblocks Read
+			thread.Join(TimeSpan.FromSeconds(2));
+			record.Release();
+		}
 	}
 }
 

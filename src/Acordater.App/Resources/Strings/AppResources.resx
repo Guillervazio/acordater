@@ -65,28 +65,18 @@
   <data name="AiTestOk" xml:space="preserve"><value>Funciona ({0:0.0} s): «{1}», {2}.</value><comment>{0} = seconds, {1} = reminder text, {2} = when</comment></data>
   <data name="AiTestFailed" xml:space="preserve"><value>Falló ({0}): {1}</value><comment>{0} = FailureXxx, {1} = technical detail</comment></data>
   <data name="WakeWordTitle" xml:space="preserve"><value>Palabra clave</value></data>
-  <data name="WakeWordDescription" xml:space="preserve"><value>Di la palabra clave para dictar un recordatorio, también con el teléfono bloqueado. Escucha con Picovoice Porcupine en el teléfono, con una notificación permanente, y gasta batería.</value></data>
-  <data name="WakeWordAccessKey" xml:space="preserve"><value>AccessKey de Picovoice</value></data>
-  <data name="WakeWordAccessKeyPlaceholder" xml:space="preserve"><value>Pega tu AccessKey</value></data>
+  <data name="WakeWordDescription" xml:space="preserve"><value>Di la palabra clave para dictar un recordatorio, también con el teléfono bloqueado. Escucha en el teléfono con openWakeWord (sin conexión ni cuenta), con una notificación permanente, y gasta batería.</value></data>
   <data name="WakeWordEnable" xml:space="preserve"><value>Escuchar la palabra clave</value></data>
-  <data name="WakeWordNeedsKey" xml:space="preserve"><value>Primero ingresa la AccessKey de Picovoice.</value></data>
   <data name="WakeWordStarting" xml:space="preserve"><value>Activando…</value></data>
   <data name="WakeWordActive" xml:space="preserve"><value>Activa: di «{0}».</value><comment>{0} = wake word phrase</comment></data>
   <data name="WakeWordInactive" xml:space="preserve"><value>Desactivada.</value></data>
   <data name="WakeWordModelBuiltIn" xml:space="preserve"><value>Palabra: «{0}» (incluida, para probar)</value><comment>{0} = wake word phrase</comment></data>
   <data name="WakeWordModelCustom" xml:space="preserve"><value>Palabra: «{0}» (modelo importado)</value><comment>{0} = wake word phrase</comment></data>
-  <data name="WakeWordParametersBuiltIn" xml:space="preserve"><value>Idioma del modelo: inglés (incluido)</value></data>
-  <data name="WakeWordParametersCustom" xml:space="preserve"><value>Idioma del modelo: {0}</value><comment>{0} = imported .pv file name</comment></data>
-  <data name="WakeWordImportModel" xml:space="preserve"><value>Importar modelo (.ppn)</value></data>
-  <data name="WakeWordImportParameters" xml:space="preserve"><value>Importar idioma (.pv)</value></data>
+  <data name="WakeWordImportModel" xml:space="preserve"><value>Importar modelo (.onnx)</value></data>
   <data name="WakeWordRemoveModel" xml:space="preserve"><value>Volver a la palabra incluida</value></data>
   <data name="WakeWordWrongFile" xml:space="preserve"><value>El archivo tiene que terminar en {0}.</value><comment>{0} = file extension</comment></data>
-  <data name="WakeWordStartFailed" xml:space="preserve"><value>No se pudo activar la palabra clave: {0}</value><comment>{0} = reason</comment></data>
-  <data name="WakeWordKeyInvalid" xml:space="preserve"><value>la AccessKey no es válida o no hay conexión para validarla</value></data>
-  <data name="WakeWordKeyLimit" xml:space="preserve"><value>la AccessKey llegó a su límite de uso o de dispositivos</value></data>
-  <data name="WakeWordKeyThrottled" xml:space="preserve"><value>demasiados intentos; prueba más tarde</value></data>
   <data name="WakeWordBackgroundStart" xml:space="preserve"><value>Android solo permite activarla con la app abierta. Abre Acordater para reactivarla.</value></data>
-  <data name="WakeWordStartTimeout" xml:space="preserve"><value>La palabra clave tardó demasiado en activarse. Revisa la conexión y prueba de nuevo.</value></data>
+  <data name="WakeWordStartTimeout" xml:space="preserve"><value>La palabra clave tardó demasiado en activarse. Prueba de nuevo.</value></data>
   <data name="WakeWordStopped" xml:space="preserve"><value>Desactivada.</value></data>
   <data name="WakeWordStoppedTitle" xml:space="preserve"><value>La palabra clave está en pausa</value></data>
   <data name="WakeWordAfterRestart" xml:space="preserve"><value>Tras reiniciar o actualizar, Android no permite reactivarla sola. Toca para abrir Acordater y reactivarla.</value></data>
@@ -97,4 +87,6 @@
   <data name="WakeWordTurnOff" xml:space="preserve"><value>Desactivar</value></data>
   <data name="WakeWordDetectedTitle" xml:space="preserve"><value>¿Qué te recuerdo?</value></data>
   <data name="WakeWordDetectedText" xml:space="preserve"><value>Toca para dictar el recordatorio.</value></data>
+  <data name="WakeWordInvalidModel" xml:space="preserve"><value>No se pudo cargar el modelo de la palabra clave. Importa un modelo .onnx entrenado con openWakeWord o vuelve a la palabra incluida.</value></data>
+  <data name="WakeWordMicrophoneUnavailable" xml:space="preserve"><value>No se pudo usar el micrófono para la palabra clave.</value></data>
 </root>
