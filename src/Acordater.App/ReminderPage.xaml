@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Acordater.App.ViewModels"
+             xmlns:strings="clr-namespace:Acordater.App.Resources.Strings"
+             x:Class="Acordater.App.ReminderPage"
+             x:DataType="vm:ReminderViewModel"
+             Title="{Binding Title}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="12">
+
+            <Label Text="{Binding Summary}" FontSize="18" Margin="0,0,0,8" />
+
+            <Label Text="{x:Static strings:AppResources.ReminderTextLabel}" FontAttributes="Bold" />
+            <Entry Text="{Binding Text}"
+                   Focused="OnFieldFocused"
+                   ClearButtonVisibility="WhileEditing" />
+
+            <Label Text="{x:Static strings:AppResources.ReminderWhenLabel}" FontAttributes="Bold" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                <DatePicker Date="{Binding Date}"
+                            MinimumDate="{Binding MinimumDate}"
+                            Format="ddd d MMM"
+                            Focused="OnFieldFocused" />
+                <TimePicker Grid.Column="1"
+                            Time="{Binding Time}"
+                            Format="HH:mm"
+                            Focused="OnFieldFocused" />
+            </Grid>
+
+            <Button Text="{Binding SaveLabel}" Command="{Binding SaveCommand}" Margin="0,16,0,0" />
+            <Button Text="{x:Static strings:AppResources.Cancel}"
+                    Command="{Binding CancelCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

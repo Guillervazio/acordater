@@ -8,7 +8,6 @@
   <data name="NewReminderPlaceholder" xml:space="preserve"><value>What should I remind you of?</value></data>
   <data name="Add" xml:space="preserve"><value>Add</value></data>
   <data name="EmptyList" xml:space="preserve"><value>Nothing pending</value></data>
-  <data name="ConfirmTitle" xml:space="preserve"><value>Save it?</value></data>
   <data name="ConfirmMessage" xml:space="preserve"><value>I'll remind you to "{0}" {1}.</value></data>
   <data name="Save" xml:space="preserve"><value>Save</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
@@ -31,4 +30,17 @@
   <data name="QuietStart" xml:space="preserve"><value>From</value></data>
   <data name="QuietEnd" xml:space="preserve"><value>Until</value></data>
   <data name="QuietDisabledHint" xml:space="preserve"><value>If both times are the same, there are no quiet hours.</value></data>
+  <data name="Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="Speak" xml:space="preserve"><value>🎤 Speak</value></data>
+  <data name="Listening" xml:space="preserve"><value>Listening… (tap when done)</value></data>
+  <data name="NewReminderTitle" xml:space="preserve"><value>New reminder</value></data>
+  <data name="EditReminderTitle" xml:space="preserve"><value>Edit reminder</value></data>
+  <data name="ReminderTextLabel" xml:space="preserve"><value>What</value></data>
+  <data name="ReminderWhenLabel" xml:space="preserve"><value>When</value></data>
+  <data name="SaveCountdown" xml:space="preserve"><value>Save ({0})</value></data>
+  <data name="ReminderGone" xml:space="preserve"><value>This reminder is no longer pending.</value></data>
+  <data name="MicrophoneDenied" xml:space="preserve"><value>To hear you, Acordater needs permission to use the microphone.</value></data>
+  <data name="SpeechUnavailable" xml:space="preserve"><value>Speech recognition is not available in this language. If the language pack is downloading, try again in a few minutes.</value></data>
+  <data name="SpeechFailed" xml:space="preserve"><value>I couldn't hear you ({0}). Please try again.</value></data>
+  <data name="AlarmSpeech" xml:space="preserve"><value>Reminder: {0}</value></data>
 </root>

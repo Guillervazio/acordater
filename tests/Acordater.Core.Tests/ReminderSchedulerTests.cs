@@ -118,6 +118,43 @@ public class ReminderSchedulerTests
     }
 
     [Fact]
+    public void EditChangesTextAndNextReminder()
+    {
+        var time = At(29, 10);
+        var scheduler = Scheduler(time);
+        var reminder = scheduler.Create("comprar jabon");
+
+        time.SetLocalNow(29, 10, 20);
+        scheduler.Edit(reminder, "comprar jabón", Local(29, 23));
+
+        Assert.Equal("comprar jabón", reminder.Text);
+        Assert.Equal(Local(29, 23), reminder.NextReminderAt); // explicit, so quiet hours don't move it
+    }
+
+    [Fact]
+    public void EditToPastTimeFallsBackToDefault()
+    {
+        var time = At(29, 10);
+        var scheduler = Scheduler(time);
+        var reminder = scheduler.Create("x", Local(29, 12));
+
+        time.SetLocalNow(29, 21, 30);
+        scheduler.Edit(reminder, "x", Local(29, 21));
+
+        Assert.Equal(Local(30, 8), reminder.NextReminderAt);
+    }
+
+    [Fact]
+    public void CompletedReminderCannotBeEdited()
+    {
+        var scheduler = Scheduler(At(29, 10));
+        var reminder = scheduler.Create("x");
+        scheduler.Complete(reminder);
+
+        Assert.Throws<InvalidOperationException>(() => scheduler.Edit(reminder, "y", Local(29, 12)));
+    }
+
+    [Fact]
     public void CompletedReminderCannotBeRescheduled()
     {
         var scheduler = Scheduler(At(29, 10));

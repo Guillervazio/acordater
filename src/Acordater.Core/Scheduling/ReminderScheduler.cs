@@ -16,8 +16,21 @@ public sealed class ReminderScheduler(TimeProvider time, IQuietHoursProvider qui
         {
             Text = text,
             CreatedAt = now,
-            NextReminderAt = requestedAt is { } requested && requested > now ? requested : NextRepeatFrom(now),
+            NextReminderAt = FirstAlertAt(requestedAt),
         };
+    }
+
+    /// <summary>
+    /// The user corrected a pending reminder. The chosen time follows the same rules as <paramref name="requestedAt"/>
+    /// in <see cref="Create"/>: respected even inside quiet hours, or the default if it is already in the past.
+    /// </summary>
+    public void Edit(Reminder reminder, string text, DateTimeOffset? requestedAt)
+    {
+        if (reminder.IsDone)
+            throw new InvalidOperationException($"Reminder {reminder.Id} is already done.");
+
+        reminder.Text = text;
+        reminder.NextReminderAt = FirstAlertAt(requestedAt);
     }
 
     /// <summary>
@@ -41,6 +54,13 @@ public sealed class ReminderScheduler(TimeProvider time, IQuietHoursProvider qui
     {
         var now = time.GetLocalNow();
         return reminder.NextReminderAt > now ? reminder.NextReminderAt : quietHours.Current.Defer(now, time.LocalTimeZone);
+    }
+
+    /// <summary>When a reminder created or edited now would first alert (see <see cref="Create"/>).</summary>
+    public DateTimeOffset FirstAlertAt(DateTimeOffset? requestedAt)
+    {
+        var now = time.GetLocalNow();
+        return requestedAt is { } requested && requested > now ? requested : NextRepeatFrom(now);
     }
 
     DateTimeOffset NextRepeatFrom(DateTimeOffset now) => quietHours.Current.Defer(now + RepeatInterval, time.LocalTimeZone);

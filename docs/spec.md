@@ -36,6 +36,12 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 - Día o franja sin hora: "mañana" → 09:00; "a la mañana" → 09:00; "a la tarde" → 15:00; "a la noche" / "esta noche" → 20:00.
 - Cada ítem es un recordatorio independiente (no hay listas en el MVP).
 
+### 4.1.1 Edición
+
+- Tocando un recordatorio pendiente en la lista se puede cambiar su texto y la fecha y hora del próximo aviso.
+- Una fecha u hora elegida al editar cuenta como **explícita** (se respeta aunque caiga en el silencio). Si no se toca, se mantiene la que tenía. Si ya pasó, se aplica la regla por defecto (+1 h).
+- Las repeticiones siguen siendo cada 1 h a partir de ese aviso. Si el recordatorio estaba sonando, deja de sonar.
+
 ### 4.2 Acciones sobre un aviso
 
 - **Hecho ✓**: finaliza el recordatorio; no vuelve a avisar.
@@ -52,7 +58,7 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 
 ### 4.4 Cómo avisa
 
-- Notificación con **sonido** + **lectura en voz alta** (TTS) del texto del recordatorio.
+- Notificación con **sonido** + **lectura en voz alta** (TTS) del texto del recordatorio ("Recuerda: …"). Se lee al empezar a sonar y cada 30 s mientras siga sonando; durante la lectura se pausa el sonido. La voz también usa el canal de alarma.
 - Debe sonar **aunque el teléfono esté en silencio** (canal de audio de alarma, como un despertador).
 - Presentación tipo alarma (pantalla completa si el teléfono está bloqueado) con los botones **Hecho** y **Posponer**.
 - Suena **en bucle hasta que se pulse Hecho o Posponer**, como un despertador. Si suenan varios a la vez, se muestran de a uno; la alarma se calla cuando no queda ninguno sonando.
@@ -61,12 +67,16 @@ Una app a la que **le hablás** para decirle qué tenés que recordar y que **in
 ### 4.5 Captura por voz
 
 1. El usuario activa la captura (botón en la app; más adelante widget / acceso rápido / palabra clave).
-2. Voz → texto con el reconocimiento de voz **en el dispositivo** (sin conexión).
+2. Voz → texto con el reconocimiento de voz **en el dispositivo** (sin conexión), en el idioma del teléfono. Tocar de nuevo el botón termina de escuchar. Si falta el paquete de ese idioma, se pide su descarga y mientras tanto se usa el servicio de reconocimiento por defecto de Android.
 3. El intérprete extrae **qué** recordar y **cuándo** (si se dijo).
-4. La app confirma lo que entendió en pantalla y en voz ("Te recuerdo *limpiar la caja del gato* a las 16:30") y permite corregirlo antes de guardar.
+4. La app confirma lo que entendió en pantalla y en voz ("Te recuerdo *limpiar la caja del gato* hoy a las 16:30") y permite corregirlo antes de guardar. Tras leerlo, **se guarda solo a los 5 s** si el usuario no toca nada; tocar cualquier campo cancela la cuenta atrás.
 5. Si no se reconoce ningún tiempo, todo el texto es la tarea y se aplica la regla por defecto (+1 h).
 
-La creación y edición por texto también debe existir (sirve para corregir y como alternativa a la voz).
+La creación y edición por texto también debe existir (sirve para corregir y como alternativa a la voz). Por texto, la confirmación se muestra solo en pantalla y se guarda con el botón.
+
+### 4.6 Accesos rápidos
+
+- **Widget** en la pantalla de inicio ("¿Qué te recuerdo?") y **botón en los ajustes rápidos** ("Nuevo recordatorio"). Los dos abren la app escuchando directamente; desde el botón rápido con el teléfono bloqueado, primero se pide desbloquearlo.
 
 ## 5. Interpretación del lenguaje
 
@@ -106,17 +116,17 @@ Notas técnicas de Android:
 
 ## 7. Fases
 
-| Fase | Contenido | Resultado verificable |
-|---|---|---|
-| 0 | Entorno, esqueleto de la solución, tests, CLAUDE.md | `dotnet test` en verde; la app arranca en el Pixel |
-| 1 | Core: modelo, reglas de programación, horario de silencio, intérprete ES/EN | Tests cubriendo la tabla 4.1 y los casos de silencio |
-| 2 | App MVP por texto: crear/listar/editar, SQLite, alarmas, notificación con Hecho/Posponer, sonido en silencio, reprogramar tras reiniciar | Recordatorio real que insiste cada hora hasta marcarlo |
-| 3 | Voz: captura por voz sin conexión, confirmación, lectura en voz alta del aviso | Crear un recordatorio solo hablando |
-| 4 | Accesos rápidos: widget y/o botón en ajustes rápidos | Capturar sin abrir la app |
-| 5 | **Spike** de palabra clave ("hey Acordater") con el teléfono bloqueado: Porcupine u openWakeWord + servicio en primer plano; medir batería | Decisión: sí/no y cómo |
-| 6 | Modo IA multiproveedor (Claude, OpenAI, Gemini con API key propia; Gemini Nano) con respaldo en reglas | Frases libres interpretadas correctamente con cada proveedor |
-| 7 | Versión Windows | La app corre en Windows |
-| Futuro | Listas (p. ej. compras como un único recordatorio) | — |
+| Fase | Contenido | Resultado verificable | Estado |
+|---|---|---|---|
+| 0 | Entorno, esqueleto de la solución, tests, CLAUDE.md | `dotnet test` en verde; la app arranca en el Pixel | Hecha |
+| 1 | Core: modelo, reglas de programación, horario de silencio, intérprete ES/EN | Tests cubriendo la tabla 4.1 y los casos de silencio | Hecha |
+| 2 | App MVP por texto: crear/listar/editar, SQLite, alarmas, notificación con Hecho/Posponer, sonido en silencio, reprogramar tras reiniciar | Recordatorio real que insiste cada hora hasta marcarlo | Hecha |
+| 3 | Voz: captura por voz sin conexión, confirmación, lectura en voz alta del aviso | Crear un recordatorio solo hablando | Hecha |
+| 4 | Accesos rápidos: widget y botón en ajustes rápidos (4.6) | Capturar sin abrir la app | Hecha |
+| 5 | **Spike** de palabra clave ("hey Cordie") con el teléfono bloqueado: Porcupine u openWakeWord + servicio en primer plano; medir batería | Decisión: sí/no y cómo | |
+| 6 | Modo IA multiproveedor (Claude, OpenAI, Gemini con API key propia; Gemini Nano) con respaldo en reglas | Frases libres interpretadas correctamente con cada proveedor | |
+| 7 | Versión Windows | La app corre en Windows | |
+| Futuro | Listas (p. ej. compras como un único recordatorio) | — | |
 
 ## 8. Riesgos
 

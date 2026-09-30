@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings Android itself shows (manifest labels, widget). Everything the app shows lives in AppResources.resx. -->
+<resources>
+	<string name="capture_tile_label">Nuevo recordatorio</string>
+	<string name="capture_widget_label">Recordatorio por voz</string>
+	<string name="capture_widget_text">¿Qué te recuerdo?</string>
+	<string name="capture_widget_description">Toca para dictar un recordatorio.</string>
+</resources>

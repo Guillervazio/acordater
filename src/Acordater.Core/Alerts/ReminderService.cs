@@ -38,6 +38,21 @@ public sealed class ReminderService(
         await RepeatAsync(reminder, cancellationToken);
     }
 
+    /// <summary>
+    /// The user changed the text or the next alert of a reminder. If it was ringing, it stops.
+    /// Returns false if the reminder is no longer pending (e.g. marked done from the notification meanwhile).
+    /// </summary>
+    public async Task<bool> EditAsync(Guid reminderId, string text, DateTimeOffset? requestedAt, CancellationToken cancellationToken = default)
+    {
+        if (await store.GetAsync(reminderId, cancellationToken) is not { IsDone: false } reminder) return false;
+
+        notifier.Dismiss(reminderId);
+        scheduler.Edit(reminder, text, requestedAt);
+        await store.UpdateAsync(reminder, cancellationToken);
+        alarms.Schedule(reminder.Id, reminder.NextReminderAt);
+        return true;
+    }
+
     public async Task CompleteAsync(Guid reminderId, CancellationToken cancellationToken = default)
     {
         notifier.Dismiss(reminderId);

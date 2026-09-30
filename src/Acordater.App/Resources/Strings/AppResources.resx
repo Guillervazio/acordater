@@ -8,7 +8,6 @@
   <data name="NewReminderPlaceholder" xml:space="preserve"><value>¿Qué te recuerdo?</value></data>
   <data name="Add" xml:space="preserve"><value>Agregar</value></data>
   <data name="EmptyList" xml:space="preserve"><value>No hay nada pendiente</value></data>
-  <data name="ConfirmTitle" xml:space="preserve"><value>¿Lo guardo?</value></data>
   <data name="ConfirmMessage" xml:space="preserve"><value>Te recuerdo «{0}» {1}.</value><comment>{0} = reminder text, {1} = when (e.g. "hoy a las 18:00")</comment></data>
   <data name="Save" xml:space="preserve"><value>Guardar</value></data>
   <data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
@@ -31,4 +30,17 @@
   <data name="QuietStart" xml:space="preserve"><value>Desde</value></data>
   <data name="QuietEnd" xml:space="preserve"><value>Hasta</value></data>
   <data name="QuietDisabledHint" xml:space="preserve"><value>Si las dos horas son iguales, no hay horario de silencio.</value></data>
+  <data name="Ok" xml:space="preserve"><value>Aceptar</value></data>
+  <data name="Speak" xml:space="preserve"><value>🎤 Hablar</value></data>
+  <data name="Listening" xml:space="preserve"><value>Escuchando… (toca para terminar)</value></data>
+  <data name="NewReminderTitle" xml:space="preserve"><value>Nuevo recordatorio</value></data>
+  <data name="EditReminderTitle" xml:space="preserve"><value>Editar recordatorio</value></data>
+  <data name="ReminderTextLabel" xml:space="preserve"><value>Qué</value></data>
+  <data name="ReminderWhenLabel" xml:space="preserve"><value>Cuándo</value></data>
+  <data name="SaveCountdown" xml:space="preserve"><value>Guardar ({0})</value><comment>{0} = seconds left before saving by itself</comment></data>
+  <data name="ReminderGone" xml:space="preserve"><value>Este recordatorio ya no está pendiente.</value></data>
+  <data name="MicrophoneDenied" xml:space="preserve"><value>Para escucharte, Acordater necesita permiso para usar el micrófono.</value></data>
+  <data name="SpeechUnavailable" xml:space="preserve"><value>El reconocimiento de voz no está disponible en este idioma. Si se está descargando el paquete de voz, prueba de nuevo en unos minutos.</value></data>
+  <data name="SpeechFailed" xml:space="preserve"><value>No pude escucharte ({0}). Prueba de nuevo.</value><comment>{0} = Android error code name</comment></data>
+  <data name="AlarmSpeech" xml:space="preserve"><value>Recuerda: {0}</value><comment>{0} = reminder text, read aloud while the alarm rings</comment></data>
 </root>

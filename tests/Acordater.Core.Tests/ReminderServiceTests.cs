@@ -86,6 +86,33 @@ public class ReminderServiceTests
     }
 
     [Fact]
+    public async Task EditStoresChangesDismissesAndMovesAlarm()
+    {
+        var reminder = await AddAsync(Local(29, 12));
+
+        Assert.True(await service.EditAsync(reminder.Id, "regar las plantas", Local(29, 18)));
+
+        var stored = (await store.GetAsync(reminder.Id))!;
+        Assert.Equal("regar las plantas", stored.Text);
+        Assert.Equal(Local(29, 18), stored.NextReminderAt);
+        Assert.Equal(Local(29, 18), alarms.Scheduled[reminder.Id]);
+        Assert.Contains(reminder.Id, notifier.Dismissed);
+    }
+
+    [Fact]
+    public async Task EditOfDoneReminderDoesNothing()
+    {
+        var reminder = await AddAsync(Local(29, 12));
+        await service.CompleteAsync(reminder.Id);
+
+        Assert.False(await service.EditAsync(reminder.Id, "y", Local(29, 18)));
+        Assert.False(await service.EditAsync(Guid.NewGuid(), "y", Local(29, 18)));
+
+        Assert.Equal("x", reminder.Text);
+        Assert.Empty(alarms.Scheduled);
+    }
+
+    [Fact]
     public async Task RescheduleAllRestoresFutureAlarmsAndFiresOverdueOnesNow()
     {
         var future = await AddAsync(Local(29, 18));
