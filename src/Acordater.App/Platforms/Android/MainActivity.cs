@@ -12,10 +12,12 @@ public class MainActivity : MauiAppCompatActivity
 	/// <summary>True while the app is on screen, so the wake word can start capture directly.</summary>
 	public static bool IsResumed { get; private set; }
 
+	bool openedOverLockScreen;
+
 	protected override void OnCreate(Bundle? savedInstanceState)
 	{
 		base.OnCreate(savedInstanceState);
-		CaptureRequests.Ended += LeaveLockScreen;
+		CaptureRequests.Ended += OnCaptureEnded;
 		if (savedInstanceState is null) // not when recreated, or it would listen again
 			CaptureIntents.Handle(this, Intent);
 	}
@@ -46,14 +48,34 @@ public class MainActivity : MauiAppCompatActivity
 
 	protected override void OnDestroy()
 	{
-		CaptureRequests.Ended -= LeaveLockScreen;
+		CaptureRequests.Ended -= OnCaptureEnded;
 		base.OnDestroy();
+	}
+
+	/// <summary>A capture from the wake word, opened with the phone locked: shows over the lock screen until it ends.</summary>
+	public void ShowOverLockScreen()
+	{
+		SetShowWhenLocked(true);
+		SetTurnScreenOn(true);
+		openedOverLockScreen = IsLocked;
+	}
+
+	// The capture is over. If it was opened over the lock screen and the phone is still locked, the app steps aside, so
+	// unlocking shows what was there before; if the user unlocked meanwhile (e.g. to correct it), it stays.
+	void OnCaptureEnded()
+	{
+		var stepAside = openedOverLockScreen && IsLocked;
+		LeaveLockScreen();
+		if (stepAside) MoveTaskToBack(true);
 	}
 
 	// A capture from the wake word may show over the lock screen; the rest of the app must not.
 	void LeaveLockScreen()
 	{
+		openedOverLockScreen = false;
 		SetShowWhenLocked(false);
 		SetTurnScreenOn(false);
 	}
+
+	bool IsLocked => ((KeyguardManager)GetSystemService(KeyguardService)!).IsKeyguardLocked;
 }
