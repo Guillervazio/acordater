@@ -173,7 +173,8 @@ public sealed class WakeWordService : Service
 			var keyword = settings.HasCustomKeyword
 				? await File.ReadAllBytesAsync(WakeWordSettings.KeywordFile)
 				: await ReadPackageFileAsync(WakeWordSettings.BuiltInKeywordModel);
-			var loaded = await Task.Run(() => new OpenWakeWordDetector(melspectrogram, embedding, keyword));
+			var threshold = settings.Threshold;
+			var loaded = await Task.Run(() => new OpenWakeWordDetector(melspectrogram, embedding, keyword, threshold));
 
 			if (destroyed)
 			{
@@ -237,15 +238,16 @@ public sealed class WakeWordService : Service
 		capture = null;
 	}
 
-	void OnDetected()
+	void OnDetected(float score)
 	{
 		if (destroyed || detectionPause is not null) return; // already handling a detection
 
 		var notifications = Notifications(this);
 		var power = (PowerManager)GetSystemService(PowerService)!;
 		var keyguard = (KeyguardManager)GetSystemService(KeyguardService)!;
-		global::Android.Util.Log.Info(LogTag, $"Wake word detected (app resumed {MainActivity.IsResumed}, " +
+		global::Android.Util.Log.Info(LogTag, $"Wake word detected (score {score:0.00}, threshold {detector?.Threshold:0.00}, app resumed {MainActivity.IsResumed}, " +
 			$"interactive {power.IsInteractive}, locked {keyguard.IsKeyguardLocked}, full screen allowed {notifications.CanUseFullScreenIntent()})");
+		CaptureStats.Record($"detected score {score:0.00} threshold {detector?.Threshold:0.00} resumed {MainActivity.IsResumed} interactive {power.IsInteractive} locked {keyguard.IsKeyguardLocked}");
 		detectionPause = Pause();
 		detectionPauseEnd ??= new Java.Lang.Runnable(ReleaseDetectionPause);
 		handler.PostDelayed(detectionPauseEnd, (long)DetectionPause.TotalMilliseconds);
@@ -257,7 +259,8 @@ public sealed class WakeWordService : Service
 	{
 		try
 		{
-			var tone = new ToneGenerator(global::Android.Media.Stream.Notification, 80);
+			// Media stream, like the spoken prompt: the user asked for it, so it sounds also with the phone on silent.
+			var tone = new ToneGenerator(global::Android.Media.Stream.Music, 80);
 			tone.StartTone(Tone.PropAck, 200);
 			handler.PostDelayed(tone.Release, 500);
 		}
@@ -368,6 +371,20 @@ public sealed class WakeWordService : Service
 		float maxScore;
 		TimeSpan maxProcessing;
 
+		/// <summary>Appends a line to files/wakeword-diagnostics.log, which survives adb disconnections (a day of normal use).</summary>
+		public static void Record(string line)
+		{
+			try
+			{
+				var path = Path.Combine(FileSystem.AppDataDirectory, "wakeword-diagnostics.log");
+				File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {line}\n");
+			}
+			catch (IOException ex)
+			{
+				global::Android.Util.Log.Warn(LogTag, $"Diagnostics file: {ex.Message}");
+			}
+		}
+
 		public void Add(ReadOnlySpan<short> samples, TimeSpan processing)
 		{
 			chunks++;
@@ -385,6 +402,7 @@ public sealed class WakeWordService : Service
 				$"WakeWord stats: {chunks} chunks in {elapsed.TotalSeconds:0.0} s (expected {elapsed.TotalMilliseconds / 80:0}), " +
 				$"inferred {detector.InferredChunks - inferredAtStart}, max rms {maxRms:0}, max score {maxScore:0.00}, " +
 				$"max processing {maxProcessing.TotalMilliseconds:0} ms, interactive {power.IsInteractive}");
+			if (maxScore >= 0.2f) Record($"near score {maxScore:0.00} rms {maxRms:0} interactive {power.IsInteractive}");
 			windowStart = System.Diagnostics.Stopwatch.GetTimestamp();
 			inferredAtStart = detector.InferredChunks;
 			chunks = 0;
@@ -431,8 +449,9 @@ public sealed class WakeWordService : Service
 				stats.Add(buffer.AsSpan(0, read), System.Diagnostics.Stopwatch.GetElapsedTime(started));
 				if (detected)
 				{
+					var score = detector.LastScore;
 					detector.Reset(); // one detection per utterance
-					service.handler.Post(service.OnDetected);
+					service.handler.Post(() => service.OnDetected(score));
 				}
 			}
 		}

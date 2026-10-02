@@ -22,7 +22,11 @@ public sealed class OpenWakeWordDetector : IDisposable
     /// <summary>80 ms: the step of the pipeline, and a good read size for the microphone.</summary>
     public const int ChunkSamples = 1280;
 
-    public const float DefaultThreshold = 0.5f;
+    /// <summary>
+    /// Below openWakeWord's usual 0.5: real speech at a distance scored 0.34–0.49 on a Pixel, while synthesized
+    /// unrelated speech scores ~0 (near rhymes such as "hey Travis" reach ~0.4).
+    /// </summary>
+    public const float DefaultThreshold = 0.35f;
 
     /// <summary>RMS level (16-bit) under which a chunk counts as silence. A quiet room measured ~70 on a Pixel 8 Pro.</summary>
     public const int DefaultQuietLevel = 150;

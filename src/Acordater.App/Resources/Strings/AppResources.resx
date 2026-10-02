@@ -90,6 +90,8 @@
   <data name="WakeWordDetectedText" xml:space="preserve"><value>Toca para dictar el recordatorio.</value></data>
   <data name="WakeWordInvalidModel" xml:space="preserve"><value>No se pudo cargar el modelo de la palabra clave. Importa un modelo .onnx entrenado con openWakeWord o vuelve a la palabra incluida.</value></data>
   <data name="WakeWordMicrophoneUnavailable" xml:space="preserve"><value>No se pudo usar el micrófono para la palabra clave.</value></data>
+  <data name="WakeWordThreshold" xml:space="preserve"><value>Umbral de detección: {0:0.00}</value><comment>{0} = threshold between 0 and 1</comment></data>
+  <data name="WakeWordThresholdHelp" xml:space="preserve"><value>Más bajo la reconoce más fácil (de lejos o con otro acento), pero puede activarse con palabras parecidas.</value></data>
   <data name="LanguageTitle" xml:space="preserve"><value>Idioma</value></data>
   <data name="LanguageDescription" xml:space="preserve"><value>Idioma de la app y del dictado. Con «Español e inglés», el dictado reconoce los dos idiomas solo (hacen falta los paquetes de voz de ambos descargados en el teléfono).</value></data>
   <data name="LanguagePhone" xml:space="preserve"><value>Idioma del teléfono</value></data>

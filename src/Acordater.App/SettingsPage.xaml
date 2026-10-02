@@ -74,6 +74,12 @@
             </Grid>
             <Label Text="{Binding WakeWordStatus}" FontSize="13" />
 
+            <Label Text="{Binding WakeWordThresholdText}" FontAttributes="Bold" />
+            <Slider Minimum="0.1" Maximum="0.9"
+                    Value="{Binding WakeWordThreshold}"
+                    DragCompletedCommand="{Binding ApplyWakeWordThresholdCommand}" />
+            <Label Text="{x:Static strings:AppResources.WakeWordThresholdHelp}" FontSize="13" />
+
             <Label Text="{Binding WakeWordModel}" />
             <Button Text="{x:Static strings:AppResources.WakeWordImportModel}" Command="{Binding ImportWakeWordModelCommand}" />
             <Button Text="{x:Static strings:AppResources.WakeWordRemoveModel}"

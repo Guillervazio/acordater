@@ -2,7 +2,7 @@ namespace Acordater.App.Voice;
 
 /// <summary>
 /// Listens for the wake word in the background, also with the phone locked, and then starts voice capture
-/// like the widget does (Android: Porcupine in a microphone foreground service). See docs/spec.md, section 4.7.
+/// like the widget does (Android: openWakeWord in a microphone foreground service). See docs/spec.md, section 4.7.
 /// </summary>
 public interface IWakeWordDetector
 {

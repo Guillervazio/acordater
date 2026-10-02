@@ -129,6 +129,13 @@ public sealed partial class SettingsViewModel : ObservableObject
 	[ObservableProperty]
 	public partial string WakeWordStatus { get; set; } = "";
 
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(WakeWordThresholdText))]
+	public partial double WakeWordThreshold { get; set; }
+
+	public string WakeWordThresholdText =>
+		string.Format(CultureInfo.CurrentCulture, AppResources.WakeWordThreshold, WakeWordThreshold);
+
 	/// <summary>Called when the page appears: secrets come from SecureStorage, which is async.</summary>
 	public async Task LoadAsync()
 	{
@@ -145,6 +152,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 		changingWakeWord = true;
 		WakeWordEnabled = wakeWordSettings.Enabled;
 		changingWakeWord = false;
+		WakeWordThreshold = wakeWordSettings.Threshold;
 		UpdateWakeWordInfo();
 	}
 
@@ -231,6 +239,24 @@ public sealed partial class SettingsViewModel : ObservableObject
 			SetWakeWordSwitch(false);
 			WakeWordStatus = ex.Message;
 		}
+	}
+
+	// The slider moves freely; the value snaps to steps of 0.05.
+	partial void OnWakeWordThresholdChanged(double value)
+	{
+		var snapped = Math.Round(value * 20) / 20;
+		if (snapped != value) WakeWordThreshold = snapped;
+	}
+
+	/// <summary>When the slider is released: saves the threshold and applies it to a running detector.</summary>
+	[RelayCommand]
+	async Task ApplyWakeWordThresholdAsync()
+	{
+		if ((float)WakeWordThreshold == wakeWordSettings.Threshold) return;
+
+		wakeWordSettings.Threshold = (float)WakeWordThreshold;
+		await RestartWakeWordAsync();
+		UpdateWakeWordInfo();
 	}
 
 	[RelayCommand]

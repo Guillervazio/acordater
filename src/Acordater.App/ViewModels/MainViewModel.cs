@@ -27,6 +27,8 @@ public sealed partial class MainViewModel(
 {
 	CancellationTokenSource? listening;
 	bool announce;
+	// The window closed (e.g. swiped away from recents): a capture still running must not try to show anything.
+	bool abandoned;
 
 	/// <summary>First run: quiet hours must be chosen before using the app.</summary>
 	public bool NeedsSetup => !quietHours.IsConfigured;
@@ -97,7 +99,7 @@ public sealed partial class MainViewModel(
 				}
 				heard = await speech.ListenAsync(partial => NewReminderText = partial, session.Token);
 			}
-			if (string.IsNullOrWhiteSpace(heard)) return;
+			if (abandoned || string.IsNullOrWhiteSpace(heard)) return;
 
 			NewReminderText = heard;
 			IsListening = false;
@@ -117,6 +119,13 @@ public sealed partial class MainViewModel(
 			IsListening = false;
 			if (!confirming) CaptureRequests.End();
 		}
+	}
+
+	/// <summary>The page's window is gone: drops a capture in progress.</summary>
+	public void Abandon()
+	{
+		abandoned = true;
+		listening?.Cancel();
 	}
 
 	/// <summary>
@@ -169,6 +178,7 @@ public sealed partial class MainViewModel(
 		{
 			IsInterpreting = false;
 		}
+		if (abandoned) return false;
 
 		NewReminderText = "";
 		await Shell.Current.GoToAsync(AppShell.ReminderRoute, new ShellNavigationQueryParameters

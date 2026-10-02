@@ -33,6 +33,7 @@ public partial class MainPage : ContentPage
 
 	void OnWindowDestroying(object? sender, EventArgs e)
 	{
+		viewModel.Abandon();
 		CaptureRequests.Raised -= OnCaptureRequested;
 		reminders.Changed -= OnRemindersChanged;
 		if (window is null) return;

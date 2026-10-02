@@ -18,15 +18,26 @@ public sealed class OpenWakeWordDetectorTests : IDisposable
     [Theory]
     [InlineData("hey_jarvis_zira.wav")]
     [InlineData("hey_jarvis_david.wav")]
+    [InlineData("hey_jarvis_helena.wav")] // a Spanish voice
     public void DetectsTheWakeWord(string file)
     {
         Assert.True(Feed(WithSilence(ReadWav(file)), chunk: OpenWakeWordDetector.ChunkSamples));
     }
 
-    [Fact]
-    public void IgnoresOtherSpeech()
+    // At the default threshold, everyday speech in both languages and phrases starting with "hey" stay silent.
+    [Theory]
+    [InlineData("negative_es.wav")]
+    [InlineData("charla_helena.wav")]
+    [InlineData("recordame_helena.wav")]
+    [InlineData("hey_javier_helena.wav")]
+    [InlineData("talk_david.wav")]
+    [InlineData("hey_there_zira.wav")]
+    [InlineData("hey_service_david.wav")]
+    [InlineData("hey_harvey_david.wav")]
+    [InlineData("harvest_david.wav")]
+    public void IgnoresOtherSpeech(string file)
     {
-        Assert.False(Feed(WithSilence(ReadWav("negative_es.wav")), chunk: OpenWakeWordDetector.ChunkSamples));
+        Assert.False(Feed(WithSilence(ReadWav(file)), chunk: OpenWakeWordDetector.ChunkSamples));
     }
 
     [Fact]
